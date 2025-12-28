@@ -26,12 +26,13 @@ allowed-tools:
 
 1. Verify installation: `command -v gemini`
 2. Select the mode required for the task; default to read-only (no `--yolo`) unless edits are necessary.
-3. Assemble the command with appropriate options:
+3. **Always use `AskUserQuestion` before using `--yolo` or `-s` flags.** These modes allow file writes or sandboxed execution - get explicit user approval first.
+4. Assemble the command with appropriate options:
    - `-m, --model <MODEL>` - Model selection
    - `-y, --yolo` - Auto-approve all tool calls (enables writes)
    - `-s, --sandbox` - Run in Docker isolation
    - `-o, --output-format <text|json>` - Output format
-4. **IMPORTANT**: Append `2>/dev/null` to all gemini commands to suppress thinking tokens (stderr). Only show stderr if debugging is needed.
+5. **IMPORTANT**: Append `2>/dev/null` to all gemini commands to suppress thinking tokens (stderr). Only show stderr if debugging is needed.
 
 ### Critical Note
 YOLO mode does NOT prevent planning prompts. Use forceful language: "Apply now", "Start immediately", "Do this without asking for confirmation".

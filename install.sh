@@ -57,7 +57,6 @@ fi
 
 echo ""
 echo "Done! Next step:"
-echo "  Update ~/.claude/settings.json with hooks configuration"
-echo "  (see hooks-tool/settings.json for example)"
+echo "  Ask Claude Code to update its default setting to include hooks-tool/settings.json."
 echo ""
 echo "Then restart Claude Code."

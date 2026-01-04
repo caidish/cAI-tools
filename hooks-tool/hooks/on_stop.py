@@ -78,6 +78,10 @@ def send_notification(title: str, message: str, priority: int = -1) -> None:
 
 
 def main():
+    # Skip notification if ralph-loop is active (avoid noisy notifications during iterations)
+    if Path(".claude/ralph-loop.local.md").exists():
+        return
+
     # Read hook input from stdin
     try:
         stdin_data = sys.stdin.read()

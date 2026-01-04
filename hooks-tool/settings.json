@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/caijiaqi/bin/hooks/on_session_start.py",
+            "command": "python3 ~/bin/hooks/on_session_start.py",
             "timeout": 15
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/caijiaqi/bin/hooks/on_session_end.py",
+            "command": "python3 ~/bin/hooks/on_session_end.py",
             "timeout": 15
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/caijiaqi/bin/hooks/on_stop.py",
+            "command": "python3 ~/bin/hooks/on_stop.py",
             "timeout": 30
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/caijiaqi/bin/hooks/on_permission.py",
+            "command": "python3 ~/bin/hooks/on_permission.py",
             "timeout": 15
           }
         ]
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/caijiaqi/bin/hooks/on_post_tool.py",
+            "command": "python3 ~/bin/hooks/on_post_tool.py",
             "timeout": 10
           }
         ]

@@ -49,5 +49,7 @@ if [[ "$remove_creds" =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo "Done! Remember to remove hooks from ~/.claude/settings.json"
+echo "Done! Next step:"
+echo "  Ask Claude Code to update its default setting to exclude hooks-tool/settings.json."
+echo ""
 echo "Then restart Claude Code."

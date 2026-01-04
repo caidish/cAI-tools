@@ -1,4 +1,15 @@
 # My Agent Prompts
+The following has been tested to work with MacOS Claude Code (v2.0.76+).
+
+The repo contains some of my favorite agent prompts, skills, commands, and hooks for Claude Code.
+
+Agents: lightly modified versions of those shared by Anthropic, as well as some custom ones.
+
+Skills: modifed version from https://github.com/skills-directory/skill-codex, and gemini-cli skills. 
+
+Commands: custom slash commands for colloborations of claude subagent, codex and gemini-cli. 
+
+Hooks: pushover integration for push notifications.
 
 ## Agents and Skills
 

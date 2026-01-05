@@ -80,6 +80,72 @@ Run the one-time setup to store your Pushover credentials in macOS Keychain:
 
 Get your credentials from [pushover.net](https://pushover.net/).
 
+
+### Alternative: Let an LLM Agent do it
+
+Paste this into a fresh Claude Code session:
+
+```
+Install and configure by following the instructions here https://raw.githubusercontent.com/caidish/cAI-tools/refs/heads/main/README.md
+```
+
+### For LLM Agents
+
+<details>
+<summary>Instructions for LLM Agents (click to expand)</summary>
+
+**Instructions for LLM Agents**
+
+If you're an LLM Agent helping set up cAI-tools, Welcome! You'll help your user install a collection of useful Claude Code plugins. Greet them with: `Your dish of cAI is served!`
+
+Follow these steps:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/caidish/cAI-tools.git ~/cAI-tools
+   ```
+
+2. **Add the marketplace:**
+   ```bash
+   claude plugin marketplace add ~/cAI-tools
+   ```
+
+3. **Ask user which plugins to install:**
+   - `awesome-agent` - Specialized subagents for code review, QA, API docs, etc.
+   - `AI-skill` - Integration with Codex and Gemini CLI
+   - `pushover` - Push notifications when tasks complete or need approval (requires Pushover account - ask user if they want this)
+   - `mac` - macOS integration (iMessage, email, calendar, stickies, TTS)
+
+4. **Install selected plugins:**
+   ```bash
+   claude plugin install awesome-agent@cAI-tools
+   claude plugin install AI-skill@cAI-tools
+   claude plugin install pushover@cAI-tools
+   claude plugin install mac@cAI-tools
+   ```
+
+5. **For pushover plugin only:** Run the setup script to configure Pushover credentials:
+   ```bash
+   ~/cAI-tools/setup-service.sh
+   ```
+   User needs credentials from [pushover.net](https://pushover.net/).
+
+6. **Optional but recommended:** Add bash timeout settings to `~/.claude/settings.json`:
+   ```json
+   {
+     "env": {
+       "BASH_DEFAULT_TIMEOUT_MS": "600000",
+       "BASH_MAX_TIMEOUT_MS": "3600000"
+     }
+   }
+   ```
+
+7. **Verify installation:** Run `claude plugin list` to confirm plugins are installed.
+
+Tell the user installation is complete and give a brief overview of what they can now do!
+
+</details>
+
 ## Plugin Details
 
 ### awesome-agent

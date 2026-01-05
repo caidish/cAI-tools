@@ -88,15 +88,13 @@ Command: `/AI-skill:collab-fix` - Collaborative multi-agent fix workflow
 
 ### pushover
 
-Notification hooks for Pushover push notifications:
+Push notifications via Pushover with automatic escalation system.
 
-| Hook | Trigger | Notification |
-|------|---------|--------------|
-| SessionStart | Claude session begins | Starts escalation service |
-| Notification | Permission prompt | Schedules escalation (1min, 1hr) |
-| PostToolUse | Tool completes | Cancels pending escalation |
-| Stop | Task completes | Low-priority "done" notification |
-| SessionEnd | Claude session ends | Cleans up service |
+**Skill:** `notification` - Send on-demand push notifications to your phone
+
+**Hooks:** Automatic permission escalation - get notified when Claude is waiting for approval (60s normal, 1hr emergency)
+
+See [pushover/README.md](plugins/pushover/README.md) for architecture details and configuration.
 
 ### mac
 
@@ -108,7 +106,7 @@ macOS native app integration:
 | iMessage | `imessage.sh` | Send iMessages |
 | Email | `imail.sh` | Send emails via Mail.app |
 | Calendar | `ical.sh` | List/add events (reads all, writes to "Agent" calendar) |
-| Stickies | `iStickies.sh` | Display notes with markdown support |
+| Stickies | `iStickies.sh` | Read and write notes with markdown support |
 
 ## Uninstallation
 

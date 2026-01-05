@@ -1,5 +1,4 @@
-# cAI-tools - Claude Code Plugin Marketplace
-
+# cAI-tools
 A collection of Claude Code plugins containing custom agents, skills, commands, and notification hooks.
 
 Tested with macOS Claude Code v2.0.76+.
@@ -18,6 +17,11 @@ The plugin is made conservative in context usage by keeping concise and precise 
 ## Example:
 1. AI-skill: `Use codex and gemini-cli to review uncommitted changes.` `Check this with codex` `AI-skill:collob-fix Fix the bug showing here as ### Bug 3`
 2. mac: `after you finish, use mac to say "All done" and a brief summary of what you did.` ``Use imessage to send me (my email address/phone number) a message "Task complete" with the summary.` `Can you add this to my stikies?` `Use mac to generate today's calendar schedule with the information on my stikies.`. 
+
+<img width="660" height="652" alt="macTools" src="https://github.com/user-attachments/assets/674ac8d8-d62a-4e5a-bd6c-584991634c36" />
+<img width="413" height="92" alt="Pushover" src="https://github.com/user-attachments/assets/e3965610-31f8-4aec-a36c-c94c2cf0aef2" />
+<img width="404" height="235" alt="Sticker" src="https://github.com/user-attachments/assets/d76ca525-757a-4768-835d-803cb5c7eca6" />
+
 
 
 ## Known Issues:

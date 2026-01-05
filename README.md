@@ -9,8 +9,8 @@ The plugin is made conservative in context usage by keeping concise and precise 
 
 | Plugin | Description |
 |--------|-------------|
-| **awesome-agent** | Collection of useful prompted subagents for code review, API docs, QA, and more |
-| **AI-skill** | Skills for interacting with other AI tools - Codex, Gemini CLI, and collaboration fixes |
+| **awesome-agent** | Collection of useful prompted subagents for code review, API docs, QA, and more. Variant from: [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) |
+| **AI-skill** | Skills for interacting with other AI tools - Codex, Gemini CLI, and collaboration fixes. Codex is a variant from [Skill Codex](https://github.com/skills-directory/skill-codex)|
 | **pushover** | Pushover notification hooks - get notified when tasks complete or permissions are needed |
 | **mac** | macOS integration - speak, send iMessages, emails, manage calendar, and display stickies |
 

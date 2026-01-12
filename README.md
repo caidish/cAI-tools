@@ -5,6 +5,13 @@ Tested with **macOS** Claude Code v2.0.76+.
 
 The plugin is made conservative in context usage by keeping concise and precise writing.
 
+##
+Needed tools:
+1. Codex should work. run `codex -V` to check. (0.79.0+)
+2. Gemini should work. run `gemini -v` to check. (0.23.0+)
+3. jq should work. run `jq -V` to check. (1.8.1+).
+   ```brew install jq```  will install jq. 
+
 ## Plugins
 
 | Plugin | Description |

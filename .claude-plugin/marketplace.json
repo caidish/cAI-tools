@@ -21,7 +21,7 @@
       "name": "AI-skill",
       "source": "./plugins/AI-skill",
       "description": "Skills for interacting with other AI tools - Codex, Gemini CLI, and collaboration fixes",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "caidish"
       }

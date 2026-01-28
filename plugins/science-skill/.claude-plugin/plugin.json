@@ -1,0 +1,8 @@
+{
+  "name": "science-skill",
+  "version": "0.1.0",
+  "description": "Skills for scientific instrument control and data analysis",
+  "author": {
+    "name": "caidish"
+  }
+}

@@ -43,6 +43,15 @@
       "author": {
         "name": "caidish"
       }
+    },
+    {
+      "name": "science-skill",
+      "source": "./plugins/science-skill",
+      "description": "Skills for scientific instrument control and data analysis",
+      "version": "0.1.0",
+      "author": {
+        "name": "caidish"
+      }
     }
   ]
 }

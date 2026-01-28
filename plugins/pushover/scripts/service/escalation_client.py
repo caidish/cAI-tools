@@ -5,6 +5,7 @@ Escalation Client - Shared library for communicating with the escalation service
 Provides functions for connecting to the service, sending commands,
 and starting the service if needed.
 """
+from __future__ import annotations
 
 import fcntl
 import json

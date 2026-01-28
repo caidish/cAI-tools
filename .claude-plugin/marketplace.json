@@ -30,7 +30,7 @@
       "name": "pushover",
       "source": "./plugins/pushover",
       "description": "Pushover notification hooks - get notified when tasks complete or permissions are needed",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "author": {
         "name": "caidish"
       }

@@ -47,8 +47,8 @@
     {
       "name": "science-skill",
       "source": "./plugins/science-skill",
-      "description": "Skills for scientific instrument control and data analysis",
-      "version": "0.1.0",
+      "description": "Skills for scientific instrument control, data analysis, and paper review",
+      "version": "0.2.1",
       "author": {
         "name": "caidish"
       }

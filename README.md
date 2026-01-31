@@ -10,7 +10,8 @@ Needed tools:
 1. Codex should work. run `codex -V` to check. (0.79.0+)
 2. Gemini should work. run `gemini -v` to check. (0.23.0+)
 3. jq should work. run `jq -V` to check. (1.8.1+).
-   ```brew install jq```  will install jq. 
+   ```brew install jq```  will install jq.
+4. Mathpix API for paper review OCR. Get credentials from [Mathpix Console](https://console.mathpix.com/). Save `MATHPIX_APP_ID` and `MATHPIX_APP_KEY` to your environment. This is optional, but strongly encouraged for paper review skill.
 
 ## Plugins
 

@@ -1,6 +1,6 @@
 {
   "name": "awesome-agent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Collection of useful prompted subagents for code review, API docs, QA, and more",
   "author": {
     "name": "caidish"

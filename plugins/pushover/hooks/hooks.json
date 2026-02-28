@@ -51,7 +51,7 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }
@@ -62,7 +62,7 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }
@@ -73,7 +73,18 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
-            "timeout": 5
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
+            "timeout": 10
           }
         ]
       }
@@ -84,7 +95,7 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }
@@ -95,7 +106,7 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/hooks/cancel_escalation.py",
-            "timeout": 5
+            "timeout": 10
           }
         ]
       }

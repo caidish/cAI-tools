@@ -6,8 +6,8 @@ This script is triggered by multiple hooks to ensure escalations are cancelled
 when the user responds to permission prompts (accept OR reject) or any other
 activity that indicates the user is present.
 
-Triggered by: PreToolUse, PermissionRequest, PostToolUse, UserPromptSubmit,
-              Stop, PreCompact
+Triggered by: PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure,
+              UserPromptSubmit, Stop, PreCompact
 
 Uses session-level tracking (not tool_use_id) to handle all response types.
 

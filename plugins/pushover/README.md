@@ -65,13 +65,14 @@ The escalation system uses **session-level tracking** (not per-tool tracking). T
 - `PreToolUse` - Claude is about to use another tool
 - `PermissionRequest` - Another permission dialog appears
 - `PostToolUse` - A tool finished executing
+- `PostToolUseFailure` - A tool execution failed
 - `UserPromptSubmit` - User submitted a new prompt
 - `Stop` - Claude finished responding
 - `PreCompact` - Session is being compacted
 
 ### Known Limitations
 
-1. **No dedicated hook for permission rejection**: Claude Code does not have a hook that fires specifically when a user rejects a permission prompt. The system relies on subsequent activity (like `Stop` or `UserPromptSubmit`) to cancel escalations.
+1. **No hook for permission acceptance/rejection**: Claude Code does not have a hook that fires when a user accepts or rejects a permission prompt. The system relies on downstream hooks (`PreToolUse` after acceptance, `Stop` after rejection) to cancel escalations. This creates gaps in scenarios like plan mode context clearing and long tool call submissions, where these downstream hooks may fire late or not at all.
 
 2. **Race condition on rapid tool use**: If Claude uses multiple tools rapidly, escalations may be added and cancelled quickly. This is by design - session-level tracking prioritizes simplicity over precision.
 

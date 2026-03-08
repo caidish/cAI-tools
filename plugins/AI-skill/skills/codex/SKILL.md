@@ -6,7 +6,7 @@ description: Use when the user asks to run Codex CLI (codex exec, codex resume) 
 # Codex Skill Guide
 
 ## Running a Task
-1. Ask the user (via `AskUserQuestion`) which model to run (`gpt-5.2-codex` or `gpt-5.1-codex-max`) AND which reasoning effort to use (`xhigh`, `high`, or `medium`) in a **single prompt with two questions**.
+1. Ask the user (via `AskUserQuestion`) which model to run (`gpt-5.3-codex`, `gpt-5.3-codex-spark`, or `gpt-5.2-codex`) AND which reasoning effort to use (`xhigh`, `high`, or `medium`) in a **single prompt with two questions**. Default to `gpt-5.3-codex` if the user has no preference.
 2. Select the sandbox mode required for the task; default to `--sandbox read-only` unless edits or network access are necessary.
 3. Assemble the command with the appropriate options:
    - `-m, --model <MODEL>`

@@ -15,6 +15,8 @@ Usage:
     python3 escalation_service.py [--socket PATH] [--log PATH]
 """
 
+from __future__ import annotations
+
 import argparse
 import heapq
 import json

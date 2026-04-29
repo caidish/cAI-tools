@@ -1,5 +1,5 @@
 # cAI-tools
-A collection of Claude Code plugins containing custom agents, skills, commands, and notification hooks.
+A collection of Claude Code plugins containing custom agents, skills, and notification hooks.
 
 Tested with **macOS** Claude Code v2.0.76+.
 
@@ -31,7 +31,7 @@ Use codex and gemini-cli to review uncommitted changes.
 Check this with codex
 ```
 ```bash
-AI-skill:collob-fix Fix the bug showing here as ### Bug 3
+Use the AI-skill:collab-fix skill to fix the bug showing here as ### Bug 3
 ```
 
 2. **mac**: 
@@ -178,10 +178,10 @@ Skills for AI tool integration:
 
 | Skill | Description |
 |-------|-------------|
-| codex | OpenAI Codex CLI integration |
+| codex | OpenAI Codex CLI integration (default model: `gpt-5.5`) |
 | gemini-cli | Google Gemini CLI integration |
-
-Command: `/AI-skill:collab-fix` - Collaborative multi-agent fix workflow
+| collab-fix | Collaborative multi-agent fix workflow (codex + gemini-cli + subagent) |
+| TDD-debug | Test-Driven Development debug workflow with multi-agent collab-fix |
 
 ### pushover
 

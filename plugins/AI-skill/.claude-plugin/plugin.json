@@ -1,7 +1,7 @@
 {
   "name": "AI-skill",
-  "version": "1.0.2",
-  "description": "Skills for interacting with other AI tools - Codex, Gemini CLI, and collaboration fixes",
+  "version": "1.1.0",
+  "description": "Skills for interacting with other AI tools - Codex, Gemini CLI, collab-fix, and TDD-debug",
   "author": {
     "name": "caidish"
   }

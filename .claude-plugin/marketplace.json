@@ -52,6 +52,16 @@
       "author": {
         "name": "caidish"
       }
+    },
+    {
+      "name": "stop-slop",
+      "source": "./plugins/stop-slop",
+      "description": "Skill for removing AI tells from prose (by Hardik Pandya)",
+      "version": "1.0.0",
+      "author": {
+        "name": "Hardik Pandya",
+        "url": "https://github.com/hardikpandya/stop-slop"
+      }
     }
   ]
 }

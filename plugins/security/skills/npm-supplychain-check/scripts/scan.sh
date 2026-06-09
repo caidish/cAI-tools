@@ -139,6 +139,43 @@ done
 
 # ---------------------------------------------------------------------------
 echo
+echo "[7] npm audit (known-bad *versions* — complements the name/scope match above)"
+# npm audit is a database lookup against published advisories. It is BLIND to the
+# settings.json / tasks.json persistence backdoor (steps 1-3) and to zero-days,
+# but it is version-precise and auto-updating where our hardcoded list is frozen
+# — so it confirms a *known-bad installed version* that a name match alone can't.
+# Read-only locally (it never edits files); it does send the dependency tree to
+# the registry, which is how audit has always worked. We never run `audit fix`.
+if ! command -v npm >/dev/null 2>&1; then
+  ok "npm not installed — skipping audit"
+elif [ ! -f "$ROOT/package.json" ]; then
+  ok "scan root is not a single project (no $ROOT/package.json) — re-run as 'scan.sh /path/to/project' to enable npm audit"
+else
+  AUDIT=$( cd "$ROOT" 2>/dev/null && npm audit --json 2>/dev/null )
+  if ! printf '%s' "$AUDIT" | grep -q '"vulnerabilities"'; then
+    ok "npm audit returned no report (offline, no lockfile, or error) — skipped"
+  else
+    # High signal: audit names one of THIS campaign's package families →
+    # version-confirmed by the advisory DB, so it's a hard finding.
+    AHIT=$(printf '%s\n' "$AUDIT" | grep -ioE "$IOC_MALICIOUS|$IOC_SCOPES" | sort -u | head -20)
+    if [ -n "$AHIT" ]; then
+      flag "npm audit flags a campaign package family (version-confirmed) — inspect:"
+      printf '      %s\n' $AHIT
+    else
+      ok "npm audit lists no campaign package families"
+    fi
+    # Informational only: overall critical/high counts are general hygiene, NOT a
+    # signal for this campaign — surfaced as [i] so they don't drown the result.
+    if command -v jq >/dev/null 2>&1; then
+      CH=$(printf '%s' "$AUDIT" | jq -r '.metadata.vulnerabilities | "\(.critical) critical, \(.high) high"' 2>/dev/null)
+      [ -n "$CH" ] && [ "$CH" != "null critical, null high" ] && \
+        printf '  [i] npm audit totals: %s (general dependency hygiene, not necessarily this campaign)\n' "$CH"
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+echo
 echo "============================================================"
 if [ "$FINDINGS" -eq 0 ]; then
   if [ "$REVIEWS" -gt 0 ]; then

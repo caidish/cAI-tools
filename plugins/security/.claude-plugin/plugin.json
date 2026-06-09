@@ -1,6 +1,6 @@
 {
   "name": "security",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local security checks - scan for the Miasma/Phantom Gyp npm supply-chain compromise and Claude Code backdoors",
   "author": {
     "name": "caidish"

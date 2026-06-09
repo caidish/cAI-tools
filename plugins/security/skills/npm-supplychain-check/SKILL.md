@@ -22,6 +22,9 @@ scripts/scan.sh /path/to/project
 
 Exit code `0` = clean, `1` = suspicious findings.
 
+To regression-check the detector itself after editing `scan.sh`, run the
+synthetic-fixture suite: `sh tests/selftest.sh` (exit `0` = all checks pass).
+
 ## SAFETY — order matters
 
 This script is **read-only**. It never deletes, modifies, or revokes anything.
@@ -54,6 +57,16 @@ by revoking tokens.** Correct order:
      against the advisory before acting.
 5. **Worm artifacts** — `shai-hulud` / `miasma` GitHub workflow files.
 6. **Shell rc files** — `curl|wget|base64 -d` piped into a shell, or `/dev/tcp`.
+7. **`npm audit`** (only when scanning a single project with a `package.json`) —
+   a database lookup against published advisories. This is **complementary**, not
+   redundant: checks 1–6 catch the *persistence backdoor* and known *names* that
+   audit can't see, while audit is **version-precise and auto-updating** — it
+   confirms a known-bad *installed version* and stays current as new advisories
+   land, which a frozen hardcoded list cannot. It is blind to zero-days (it found
+   nothing during this campaign's first hours) and to the config backdoor, so it
+   never stands alone. Read-only locally; we never run `npm audit fix`. Audit hits
+   that name a campaign family are hard `[!]` findings; overall critical/high
+   counts are surfaced as `[i]` general hygiene, not campaign signal.
 
 ## Interpreting results
 

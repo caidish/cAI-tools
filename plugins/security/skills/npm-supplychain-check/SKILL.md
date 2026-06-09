@@ -42,10 +42,16 @@ by revoking tokens.** Correct order:
 2. **`.vscode/tasks.json`** — flags tasks that auto-run on `folderOpen`.
 3. **Project `.claude/settings*.json`** — flags `SessionStart` / exfil hooks.
    (Legitimate `PostToolUse` / `PreToolUse` project hooks are *not* flagged.)
-4. **Affected npm packages** — global installs, `node_modules` dirs, and lockfiles
-   for the known IoC families (`@redhat-cloud-services`, `@vapi-ai/server-sdk`,
-   `ai-sdk-ollama`, `node-env-resolver`, `wrangler-deploy`, `autotel`, `awaitly`,
-   `executable-stories`).
+4. **Affected npm packages** — global installs, `node_modules` dirs, and lockfiles.
+   Two tiers, because matching a package *name* is not the same as proving compromise:
+   - `[!]` **Malicious names** (`ai-sdk-ollama`, `node-env-resolver`, `wrangler-deploy`,
+     `autotel`, `awaitly`, `executable-stories`) — the package itself is the malware;
+     a match is a real IoC and counts toward the suspicious exit code.
+   - `[?]` **Targeted scopes** (`@redhat-cloud-services`, `@vapi-ai`) — legitimate,
+     widely-used scopes where only specific poisoned *versions* were bad. A match is
+     surfaced for **version review**, not hard-flagged, so a clean install of Red Hat
+     or Vapi packages doesn't trigger a false alarm. Confirm the installed version
+     against the advisory before acting.
 5. **Worm artifacts** — `shai-hulud` / `miasma` GitHub workflow files.
 6. **Shell rc files** — `curl|wget|base64 -d` piped into a shell, or `/dev/tcp`.
 
@@ -53,8 +59,11 @@ by revoking tokens.** Correct order:
 
 - **CLEAN** — no IoCs; no cleanup needed. The user does not need the revoke
   sequence.
-- **SUSPICIOUS** — read each flagged file before acting; distinguish your own
-  legitimate hooks from injected ones, then follow the order above.
+- **CLEAN of hard IoCs + `[?]` review items** — a legitimate-but-targeted scope
+  was found. Exit code is still `0`. Check the installed version against the
+  advisory's bad-version list; only escalate if it matches.
+- **SUSPICIOUS** (`[!]`) — read each flagged file before acting; distinguish your
+  own legitimate hooks from injected ones, then follow the order above.
 
 ## Hardening to suggest afterward
 

@@ -17,14 +17,30 @@
 
 ROOT="${1:-$HOME}"
 FINDINGS=0
+REVIEWS=0
 
-# Affected package families from this campaign (not exhaustive — see advisories).
-IOC_PKGS='redhat-cloud-services|@vapi-ai|vapi-ai|ai-sdk-ollama|autotel|awaitly|executable-stories|node-env-resolver|wrangler-deploy'
+# Iterate find/command output on newlines only — paths on macOS routinely
+# contain spaces ("Application Support", iCloud "Mobile Documents"). Default
+# IFS would word-split those and silently mis-scan or skip a file, which for a
+# detector is a false negative — worse than a false positive. set -f stops a
+# literal '*' in a path from glob-expanding.
+IFS='
+'
+set -f
+
+# Malicious package NAMES — the package itself is the malware (typosquats).
+# Matching the name is a genuine indicator of compromise.
+IOC_MALICIOUS='ai-sdk-ollama|node-env-resolver|wrangler-deploy|autotel|awaitly|executable-stories'
+# Targeted but LEGITIMATE scopes — only specific poisoned *versions* were bad,
+# and clean versions are widely installed. Matching the name alone is NOT proof
+# of compromise, so these are surfaced for version review, not hard-flagged.
+IOC_SCOPES='@redhat-cloud-services|@vapi-ai'
 # Commands that have no business inside a Claude Code hook / shell rc one-liner.
 EXFIL='curl|wget|base64|eval|/dev/tcp|atob|nc |xxd|openssl enc'
 
-flag() { FINDINGS=$((FINDINGS+1)); printf '  [!] %s\n' "$1"; }
-ok()   { printf '  [ok] %s\n' "$1"; }
+flag()   { FINDINGS=$((FINDINGS+1)); printf '  [!] %s\n' "$1"; }
+review() { REVIEWS=$((REVIEWS+1));   printf '  [?] %s\n' "$1"; }
+ok()     { printf '  [ok] %s\n' "$1"; }
 
 echo "============================================================"
 echo " npm supply-chain / Claude Code backdoor scan"
@@ -72,25 +88,34 @@ done
 
 # ---------------------------------------------------------------------------
 echo
-echo "[4] Affected npm packages"
+echo "[4] Affected npm packages  ([!] malicious name = IoC;  [?] targeted scope = verify version)"
 # 4a: global installs
 if command -v npm >/dev/null 2>&1; then
-  G=$(npm ls -g --depth=0 2>/dev/null | grep -iE "$IOC_PKGS")
-  if [ -n "$G" ]; then flag "global npm: $G"; else ok "no affected global npm packages"; fi
+  GLS=$(npm ls -g --depth=0 2>/dev/null)
+  GM=$(printf '%s\n' "$GLS" | grep -iE "$IOC_MALICIOUS")
+  GS=$(printf '%s\n' "$GLS" | grep -iE "$IOC_SCOPES")
+  [ -n "$GM" ] && flag   "malicious global npm package: $GM"
+  [ -n "$GS" ] && review "global npm in a targeted scope — verify version vs advisory: $GS"
+  [ -z "$GM$GS" ] && ok "no affected global npm packages"
 else
   ok "npm not installed"
 fi
-# 4b: node_modules dirs
-NM=$(find "$ROOT" -type d -path '*node_modules/*' \( \
-      -path '*node_modules/@redhat-cloud-services*' -o \
-      -path '*node_modules/@vapi-ai*' -o \
+# 4b: node_modules dirs — separate malicious names from targeted scopes
+MAL=$(find "$ROOT" -type d -path '*node_modules/*' \( \
       -name 'ai-sdk-ollama' -o -name 'node-env-resolver' -o \
-      -name 'wrangler-deploy' -o -name 'autotel' -o -name 'awaitly' \) 2>/dev/null | head -20)
-if [ -n "$NM" ]; then flag "affected dirs in node_modules:"; printf '      %s\n' $NM; else ok "no affected packages in any node_modules"; fi
+      -name 'wrangler-deploy' -o -name 'autotel' -o \
+      -name 'awaitly' -o -name 'executable-stories' \) 2>/dev/null | head -20)
+SCO=$(find "$ROOT" -type d \( \
+      -path '*node_modules/@redhat-cloud-services*' -o \
+      -path '*node_modules/@vapi-ai*' \) 2>/dev/null | head -20)
+if [ -n "$MAL" ]; then flag "malicious package dirs in node_modules:"; printf '      %s\n' $MAL; fi
+if [ -n "$SCO" ]; then review "targeted-scope dirs — verify each version vs advisory:"; printf '      %s\n' $SCO; fi
+[ -z "$MAL$SCO" ] && ok "no affected packages in any node_modules"
 # 4c: lockfiles
 LF=0
 for lock in $(find "$ROOT" \( -name package-lock.json -o -name yarn.lock -o -name pnpm-lock.yaml \) -not -path '*/node_modules/*' 2>/dev/null); do
-  if grep -qiE "$IOC_PKGS" "$lock" 2>/dev/null; then flag "lockfile references affected pkg: $lock"; LF=1; fi
+  if grep -qiE "$IOC_MALICIOUS" "$lock" 2>/dev/null; then flag "lockfile references malicious pkg: $lock"; LF=1; fi
+  if grep -qiE "$IOC_SCOPES"    "$lock" 2>/dev/null; then review "lockfile references targeted scope (verify version): $lock"; LF=1; fi
 done
 [ "$LF" = 0 ] && ok "no lockfiles reference affected packages"
 
@@ -116,7 +141,13 @@ done
 echo
 echo "============================================================"
 if [ "$FINDINGS" -eq 0 ]; then
-  echo " RESULT: CLEAN — no indicators of compromise found."
+  if [ "$REVIEWS" -gt 0 ]; then
+    echo " RESULT: CLEAN of hard IoCs — but $REVIEWS [?] item(s) hit a"
+    echo " legitimate-but-targeted scope. Confirm the installed version is"
+    echo " NOT in the advisory's bad-version list before treating as safe."
+  else
+    echo " RESULT: CLEAN — no indicators of compromise found."
+  fi
   echo "============================================================"
   exit 0
 else

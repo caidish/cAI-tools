@@ -32,39 +32,46 @@ allowed-tools:
    - `-y, --yolo` - Auto-approve all tool calls (enables writes)
    - `-s, --sandbox` - Run in Docker isolation
    - `-o, --output-format <text|json>` - Output format
-5. **Important**: `gemini "prompt" -o json 2>/dev/null | jq -r '.response'` to suppress stderr noise and extract the json response, unless specified by the user.
+5. **Important**: extract the JSON response with:
+   ```bash
+   gemini "prompt" -o json 2>/dev/null | perl -0777 -pe 's/^[^{]*//s' | jq -r '.response'
+   ```
+   The `perl` stage is required: gemini CLI (>= 0.37) prints status noise (e.g. `MCP issues detected. Run /mcp list for status.`) on **stdout** before the JSON object, so piping straight to `jq` fails with `Invalid numeric literal`. The perl filter strips everything before the first `{`.
 
 ### Critical Note
 YOLO mode does NOT prevent planning prompts. Use forceful language: "Apply now", "Start immediately", "Do this without asking for confirmation".
 
 ## Quick Reference
 
+`EXTRACT` below stands for `perl -0777 -pe 's/^[^{]*//s' | jq -r '.response'` (always write it out in full when running commands).
+
 | Use case | Mode | Command pattern |
 | --- | --- | --- |
-| Read-only analysis | read-only | `gemini "..." -o json 2>/dev/null \| jq -r '.response'` |
-| Apply local edits | write | `gemini "..." --yolo -o json 2>/dev/null \| jq -r '.response'` |
-| Sandboxed write | sandbox | `gemini "..." --yolo --sandbox -o json 2>/dev/null \| jq -r '.response'` |
+| Read-only analysis | read-only | `gemini "..." -o json 2>/dev/null \| EXTRACT` |
+| Apply local edits | write | `gemini "..." --yolo -o json 2>/dev/null \| EXTRACT` |
+| Sandboxed write | sandbox | `gemini "..." --yolo --sandbox -o json 2>/dev/null \| EXTRACT` |
 
 ### Example Commands
 
 ```bash
 # Read-only
-gemini "Review src/ for bugs" -o json 2>/dev/null | jq -r '.response'
+gemini "Review src/ for bugs" -o json 2>/dev/null | perl -0777 -pe 's/^[^{]*//s' | jq -r '.response'
 
 # Write mode
-gemini "Fix bug in file.py. Apply now." --yolo -o json 2>/dev/null | jq -r '.response'
+gemini "Fix bug in file.py. Apply now." --yolo -o json 2>/dev/null | perl -0777 -pe 's/^[^{]*//s' | jq -r '.response'
 
 # If redirection fails, wrap in bash -lc
-bash -lc 'gemini "prompt" -o json 2>/dev/null | jq -r ".response"'
+bash -lc 'gemini "prompt" -o json 2>/dev/null | perl -0777 -pe "s/^[^{]*//s" | jq -r ".response"'
 ```
 
 ## Following Up
 
-- Resume: `echo "follow-up" | gemini -r latest -o json 2>/dev/null | jq -r '.response'`
+- Resume: `echo "follow-up" | gemini -r latest -o json 2>/dev/null | perl -0777 -pe 's/^[^{]*//s' | jq -r '.response'`
 - List sessions: `gemini --list-sessions`
 
 ## Error Handling
 
+- **jq parse error** (`Invalid numeric literal`): stdout noise before the JSON — make sure the `perl -0777 -pe 's/^[^{]*//s'` stage is in the pipe.
 - **Rate limit**: CLI auto-retries with backoff. Use `-m gemini-2.5-flash` for lower priority tasks.
 - **Command failure**: Check with `gemini --version`, use `--debug` for details.
 - **Always validate** Gemini's output for security vulnerabilities (XSS, injection) before using.

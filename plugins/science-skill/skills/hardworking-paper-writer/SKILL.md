@@ -35,10 +35,19 @@ These are the patterns you are hunting for. Apply them as judgment, not as a che
 6. **Vary rhythm.** Mix sentence lengths. Two items often beat three. Avoid em-dashes if the author doesn't already use them.
 7. **Trust the reader.** State findings directly. Drop the softening and the over-explanation.
 8. **Cut quotables.** If a sentence sounds engineered to be tweeted, rewrite it plainly.
+9. **Write for the reader, not the insider.** Unnecessary jargon is a tell of its own kind — it signals an author writing to prove membership rather than to be understood. Translate any term that has a plain equivalent, expand each acronym on first use, and unpack notation a reader can't be assumed to carry in their head. When jargon is genuinely load-bearing — a field term with no substitute — keep it, but make the sentence around it do the work of carrying someone from one subfield over. Density the argument needs, keep; density that only flatters the writer, cut.
 
 Deeper references live in the stop-slop plugin if you need examples or the full phrase lists: `plugins/stop-slop/skills/stop-slop/references/` (`phrases.md`, `structures.md`, `examples.md`). Read them only when a specific case is unclear.
 
 For papers, add three domain constraints on top: **never alter meaning** (a tighter sentence that changes a claim is a failure), **leave math, citations, labels, and defined terms untouched**, and **match field register** — a Nature letter and a math proof slop differently.
+
+## Two things the sentence loop can miss
+
+Fixing one line at a time is necessary but not sufficient. Two defects only surface when you lift your eyes from the single sentence — keep both in view throughout.
+
+**Read as the reader, not the author.** The author knows what they mean; the reader has only the words on the page. Every so often, drop the editor's hat and read a passage cold — as someone who knows the field but has never seen this paper. Where would they stall? An undefined term, a pronoun with no clear antecedent, a claim that quietly assumes three steps the author skipped, an acronym introduced fifty lines ago — and, most often, a concept that gets *used* well before it gets *defined*. Forward references like that are nearly invisible to the author, who has the whole paper in their head, and nearly fatal to the reader, who is meeting the term for the first time with no anchor. Track where each key term, symbol, and acronym is first introduced versus where it's first used; when use precedes definition, flag it. Each of those sentences is locally fine, which is exactly why a sentence-by-sentence pass walks right past them. This reader's-eye reading is the lens behind principle 9, and it is the test for whether a rewrite actually helped: not "is this cleaner?" but "does this land for someone who isn't already inside the author's head?"
+
+**Mind the paragraph, not just the sentence.** A paragraph has a shape, and in most academic prose that shape is general-to-specific: the opening sentence states the paragraph's claim, and everything after it earns that claim. Check that each paragraph's opener actually announces what the paragraph delivers; a buried or missing topic sentence is one of the most common structural defects, and no sentence-level edit will fix it. Then check that paragraphs connect: each should pick up where the last left off (given-new flow), so the reader never wonders why this paragraph follows that one. Watch both failure modes — a missing transition that drops the reader, and its opposite, a mechanical connective ("Furthermore", "Moreover", "Additionally") propped in place of a real logical link (that one is also slop). These are supra-sentence problems; you handle them at paragraph boundaries, not inside a single sentence's rewrite.
 
 ## Phase 0 — Set up the workspace
 
@@ -76,6 +85,8 @@ While reading, fill in `style-profile.md` from the **existing prose** (this is y
 
 This profile is what keeps your rewrites sounding like the author instead of like a generic editor. Update it continuously in Phase 2.
 
+The same whole-paper read is your one chance to see the structure before you start editing inside it, so map it now. As you go, record in `revision-log.md` under a **Structure notes** heading: each paragraph's topic sentence (or a note that it lacks one), any transition between paragraphs that drops the reader, and a running **first-use map** of key terms, symbols, and acronyms — where each is introduced and whether it's used anywhere earlier. This map is what lets you catch use-before-define defects in Phase 2, which you could never see one sentence at a time.
+
 Then segment the prose into reviewable sentences with stable IDs (`S001`, `S002`, …). Segmentation in LaTeX and Markdown has real pitfalls (abbreviations, math, citations, environments) — follow [references/segmentation.md](references/segmentation.md). Record the total count and a sentence-id map in `revision-log.md` so progress is trackable and resumable. Tell the author how many prose sentences there are so they know the scope.
 
 ## Phase 2 — Revise sentence by sentence
@@ -84,7 +95,7 @@ Loop over unreviewed sentences in order. For each one:
 
 **1. Show it in context.** Display the previous sentence (dimmed/as context), the current sentence, and the next sentence. Context prevents you from "fixing" a sentence in a way that breaks the flow into the next claim.
 
-**2. Judge it.** Decide which stop-slop patterns, if any, actually apply, and whether the meaning has any fragile parts (a hedge, a precise bound, a defined term) you must preserve. If the sentence is already clean and in the author's voice, say so plainly and offer to keep it — don't manufacture problems to look busy. A fast "this one's clean, keep it?" is a good outcome.
+**2. Judge it.** Decide which stop-slop patterns, if any, actually apply, and whether the meaning has any fragile parts (a hedge, a precise bound, a defined term) you must preserve. Read it once more as the reader, not the author: is there jargon with a plainer equivalent, an acronym not yet expanded, or a term used here that your first-use map says isn't defined until later? Those are reader-stalls worth fixing even when the sentence is otherwise clean. If the sentence is both clean and clear to an outside reader and in the author's voice, say so plainly and offer to keep it — don't manufacture problems to look busy. A fast "this one's clean, keep it?" is a good outcome. When the sentence opens or closes a paragraph, also weigh its structural job: does the opener announce the paragraph's claim, does the closer hand off to the next paragraph? Let that shape the rewrites.
 
 **3. Offer three versions as a spectrum.** When a sentence does need work, generate exactly three rewrites at increasing edit distance, each obeying the style-profile and each changing nothing about the meaning:
 
@@ -107,6 +118,8 @@ The spectrum is deliberate. The author's pick tells you how aggressive they want
 **7. Learn.** Update `style-profile.md` with what this choice revealed: their preferred edit aggressiveness, words or constructions they consistently keep or kill, how they handle hedging. Reference [references/preference-learning.md](references/preference-learning.md) for what signals to extract and how to let them shift your future options. The goal is concrete: by sentence 30 you should be proposing options that need far less steering than at sentence 3.
 
 **8. Advance** to the next unreviewed sentence.
+
+**Paragraph checkpoints.** When you finish the last sentence of a paragraph, pause for a short paragraph-level look — the view the sentence loop can't give you. Three questions: does the paragraph lead with a clear topic sentence and support it, or is the claim buried? Does it flow from the previous paragraph and into the next, or is a transition missing or merely mechanical? And does any term land before it's defined, per your first-use map? If something's off, offer a paragraph-level fix the same way you offer sentence edits — propose a concrete change (promote or rewrite the topic sentence, add a real transition, move a definition earlier), let the author choose with `AskUserQuestion`, and log it against the relevant sentence ids. Keep these checkpoints lighter and rarer than the sentence loop; most paragraphs will pass.
 
 Keep the rhythm humane. Offer the author natural break points ("we've done 20 of 140 — keep going or pause?"). They can stop anytime; the log and profile make resuming seamless.
 

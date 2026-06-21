@@ -22,6 +22,22 @@ Seed these two files in Phase 0. Keep them plain Markdown so the author can read
 
 Status values: pending · kept (original unchanged) · edited (rewritten).
 
+## Structure notes
+
+_Filled during the Phase 1 whole-paper read, updated as you go. This is the supra-sentence view the sentence loop can't give you._
+
+### Paragraph map
+| Paragraph | Topic sentence (id / "buried" / "missing") | Flow into next |
+|-----------|--------------------------------------------|----------------|
+| Intro ¶1  | S004                                        | ok             |
+| Intro ¶2  | buried (claim in S011, not S009)            | weak — no link |
+
+### First-use map (catch use-before-define)
+| Term / symbol / acronym | Defined at | First used at | Issue              |
+|-------------------------|------------|---------------|--------------------|
+| SNR                     | S031       | S012          | used before defined |
+| $\gamma$                | S020       | S020          | ok                  |
+
 ## Decisions
 
 ### S002 — edited (Medium)

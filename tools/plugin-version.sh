@@ -9,7 +9,7 @@ BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MARKETPLACE="$BASE_DIR/.claude-plugin/marketplace.json"
 MARKETPLACE_NAME="cAI-tools"
 CLAUDE_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
-PLUGINS=("awesome-agent" "AI-skill" "pushover" "mac")
+PLUGINS=("awesome-agent" "AI-skill" "pushover" "mac" "science-skill" "stop-slop" "security")
 
 # Check for gum
 HAS_GUM=$(command -v gum &>/dev/null && echo 1 || echo 0)

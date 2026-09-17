@@ -1,0 +1,9 @@
+[
+ {"id": "recommendation", "label": "Overall recommendation", "type": "select",
+  "options": ["accept", "minor revision", "major revision", "reject"], "required": true},
+ {"id": "journal", "label": "Journal level", "type": "select",
+  "options": ["top-tier", "mid-tier", "specialized"]},
+ {"id": "editor_questions", "label": "Editor's specific questions", "type": "textarea",
+  "placeholder": "Paste them here, or leave empty"},
+ {"id": "comments", "label": "Anything else the review should say", "type": "textarea"}
+]

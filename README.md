@@ -21,7 +21,7 @@ Needed tools:
 | **AI-skill** | Skills for interacting with other AI tools - Codex, Gemini CLI, and collaboration fixes. Codex is a variant from [Skill Codex](https://github.com/skills-directory/skill-codex)|
 | **pushover** | Pushover notification hooks - get notified when tasks complete or permissions are needed |
 | **mac** | macOS integration - speak, send iMessages, emails, manage calendar, and display stickies |
-| **science-skill** | Paper review copilot with a local web UI for decisions, image analysis, and sentence-level paper revision |
+| **science-skill** | Paper review copilot with a local web UI for decisions, image analysis, sentence-level paper revision, and research-figure slides |
 
 ## Example:
 1. **AI-skill**: 
@@ -214,6 +214,7 @@ macOS native app integration:
 | paper-review-helper | Section-by-section paper review driven from a local web UI (see below) |
 | hardworking-paper-writer | Sentence-by-sentence revision that strips AI tells while keeping the author's voice |
 | vision | Analyze or describe an image (figures, plots, setups) |
+| research-slide | Turn a research figure or result into an editable python-pptx defense/report slide in the house research-highlight style |
 
 **paper-review-helper web UI.** Claude does not ask review questions in the terminal. It starts a local server (`scripts/review_ui.py start --workspace <paper-folder>`, stdlib only, bound to 127.0.0.1) and opens a browser page with three panes: the section outline, the current section rendered with KaTeX math, figures and colored issue markers, and a conversation pane with decision cards, chat and an issue log. Claude posts sections and questions through the CLI and blocks until you submit a card or send a message; issues you log in the browser are delivered back to Claude with your next reply. State is saved in `<paper-folder>/artifact/ui-state.json`, so restarting the server resumes the review. The page loads `marked` and KaTeX from cdnjs, so it needs network access once. Optional: `MATHPIX_APP_ID` / `MATHPIX_API_KEY` for PDF → LaTeX conversion.
 

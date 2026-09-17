@@ -7,7 +7,7 @@ The plugin is made conservative in context usage by keeping concise and precise 
 
 ##
 Needed tools:
-1. Codex should work. run `codex -V` to check. (0.79.0+)
+1. Codex should work. run `codex -V` to check. (0.153.0+; `--full-auto` was removed, the skill uses `--approve-for-me`)
 2. Gemini should work. run `gemini -v` to check. (0.23.0+)
 3. jq should work. run `jq -V` to check. (1.8.1+).
    ```brew install jq```  will install jq.
@@ -178,7 +178,7 @@ Skills for AI tool integration:
 
 | Skill | Description |
 |-------|-------------|
-| codex | OpenAI Codex CLI integration (default model: `gpt-5.5`) |
+| codex | OpenAI Codex CLI integration (models: `gpt-6-astra` default, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`; effort `low`…`max`) |
 | gemini-cli | Google Gemini CLI integration |
 | collab-fix | Collaborative multi-agent fix workflow (codex + gemini-cli + subagent) |
 | TDD-debug | Test-Driven Development debug workflow with multi-agent collab-fix |

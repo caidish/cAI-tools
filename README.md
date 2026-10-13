@@ -212,7 +212,7 @@ macOS native app integration:
 | Skill | Description |
 |-------|-------------|
 | paper-review-helper | Section-by-section paper review driven from a local web UI (see below) |
-| hardworking-paper-writer | Sentence-by-sentence revision that strips AI tells while keeping the author's voice |
+| hardworking-paper-writer | Sentence-by-sentence revision that strips AI tells while keeping the author's voice, driven from a local web UI (see below) |
 | vision | Analyze or describe an image (figures, plots, setups) |
 | research-slide | Turn a research figure or result into an editable python-pptx defense/report slide in the house research-highlight style |
 
@@ -220,6 +220,12 @@ macOS native app integration:
 
 ```bash
 /science-skill:paper-review-helper ~/papers/manuscript.pdf
+```
+
+**hardworking-paper-writer web UI.** Same architecture, different loop. Claude starts `scripts/writer_ui.py start --workspace <paper-stem>-revision` (port 8766, so it can run beside a review) and the page shows your paper as running prose with the sentence under discussion highlighted in amber, edited sentences in green and kept ones underlined. For each sentence Claude posts a card with the original, three rewrites (Light / Medium / Bold, each with a note on what it fixes), "Keep original" and a free-text box: type a full sentence and it is applied verbatim, type an instruction ("shorter", "keep 'we'") and Claude regenerates the options. Keys 1–4 pick, ⌘/Ctrl+Enter submits. A Changes tab lists every edit (original → final → fixes) and a Style tab shows the voice profile Claude is learning from your choices. `scripts/segment.py` splits `.tex` / `.md` / `.txt` into sentences with stable ids; PDFs go through Mathpix first. State is saved in `<paper-stem>-revision/artifact/ui-state.json`, so restarting resumes.
+
+```bash
+/science-skill:hardworking-paper-writer ~/papers/draft.tex
 ```
 
 ## Uninstallation

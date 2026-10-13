@@ -1,7 +1,7 @@
 ---
 name: hardworking-paper-writer
-description: Revise an academic paper sentence by sentence with the author, stripping AI writing tells (stop-slop) while preserving the author's own voice. Use this whenever the user wants to polish, tighten, edit, proofread, or "de-slop" a paper, manuscript, draft, abstract, or thesis chapter — especially when they want careful interactive sentence-level revision rather than a one-shot rewrite. Trigger on requests like "help me revise my paper", "clean up my draft", "make my writing sound less AI", "go through my abstract line by line", or when they hand over a .tex/.md/.txt paper to improve.
-argument-hint: <path-to-paper (.tex / .md / .txt)>
+description: Revise an academic paper sentence by sentence with the author, stripping AI writing tells (stop-slop) while preserving the author's own voice. Use this whenever the user wants to polish, tighten, edit, proofread, or "de-slop" a paper, manuscript, draft, abstract, or thesis chapter — especially when they want careful interactive sentence-level revision rather than a one-shot rewrite. Trigger on requests like "help me revise my paper", "clean up my draft", "make my writing sound less AI", "go through my abstract line by line", or when they hand over a .tex/.md/.txt/.pdf paper to improve. Talks to the author through a local web UI (the paper with the current sentence highlighted, rewrite cards, chat, change log) instead of terminal prompts.
+argument-hint: <path-to-paper (.tex / .md / .txt / .pdf) or folder>
 allowed-tools:
   - Read
   - Write
@@ -22,6 +22,8 @@ Two commitments follow from that:
 
 - **The author decides every sentence.** You propose; they dispose. Never edit prose without an explicit choice from them.
 - **You get better as you go.** Every choice the author makes — and every option they reject — tells you something about their taste. Fold it back in so your later suggestions need less correction than your early ones. That is the "hardworking" part.
+
+The conversation runs in a **local web UI**, not in the terminal: the author reads their paper there with the sentence under discussion highlighted, picks one of your rewrites (or writes their own) on a card, and chats. You block on `propose` / `ask` / `wait` until they respond. Paths below are relative to this skill's directory. `$W` = `scripts/writer_ui.py`, `$SEG` = `scripts/segment.py`. Every command prints one JSON object; read it. Full CLI reference: [references/ui-protocol.md](references/ui-protocol.md).
 
 ## The stop-slop principles
 
@@ -51,25 +53,38 @@ Fixing one line at a time is necessary but not sufficient. Two defects only surf
 
 ## Phase 0 — Set up the workspace
 
-1. **Locate the paper** from `$ARGUMENTS`. If none is given, ask for the path. Accept `.tex`, `.md`, `.txt`. For a folder, prefer `.tex`, then `.md`. If only a PDF exists, tell the author this skill needs a text source and point them at `paper-review-helper` to convert it first.
+Intake mirrors `paper-review-helper`: take a text source, a PDF, or a folder; convert a PDF to LaTeX with Mathpix when needed; build a workspace next to the paper; start the UI.
 
-2. **Check for an existing revision** before creating anything. If `<paper-stem>-revision/` already exists with a `revision-log.md`, this is a resume — skip to "Resuming" below.
+1. **Locate the paper** from `$ARGUMENTS`. `.tex` / `.md` / `.txt` → the source. `.pdf` → the source will be the LaTeX Mathpix produces (step 2). Folder → prefer `.tex`, then `.md`, `.txt`, `.pdf`; several candidates → `AskUserQuestion` which one. Nothing found → `AskUserQuestion` for the path (the only terminal questions you ask).
 
-3. **Build the workspace** as a sibling of the paper:
+2. **Convert PDF → LaTeX** (PDF sources only). Check `MATHPIX_APP_ID` and `MATHPIX_API_KEY`. If missing, tell the author: "Set MATHPIX_APP_ID and MATHPIX_API_KEY for PDF→LaTeX, or point me at a .tex/.md/.txt source" and stop — this skill edits text in place, so it needs a text source that preserves math and structure. If set, build the workspace folder first (step 4), then:
+
+   ```bash
+   python "${CLAUDE_PLUGIN_ROOT}/skills/paper-review-helper/scripts/pdf2tex.py" "<pdf>" "<paper-stem>-revision"
+   ```
+
+   Output: `<paper-stem>-revision/<pdf_id>/<pdf_id>.tex` with `images/`. Copy it into `original/` and `working/` as `<paper-stem>.tex`; keep `<pdf_id>/` so figure paths resolve. Mathpix output carries OCR artefacts (split words, stray `\\`, mis-read symbols, `\captionsetup` leftovers) — note the conversion in `revision-log.md` and treat such tokens as noise, not the author's prose.
+
+3. **Check for an existing revision** before creating anything. If `<paper-stem>-revision/revision-log.md` exists, this is a resume — see "Resuming".
+
+4. **Build the workspace** as a sibling of the paper, and copy the source into both `original/` and `working/`. From here on every Edit targets `working/` only; `original/` is the safety net and the basis for the final diff.
 
 ```text
 <paper-stem>-revision/
-├── original/            # untouched backup — never edited
-│   └── <paper filename>
-├── working/             # the live copy you edit in place
-│   └── <paper filename>
-├── revision-log.md      # every sentence: id, status, original, chosen, fixes
-└── style-profile.md     # evolving model of the author's voice + preferences
+├── original/<paper>         # untouched backup — never edited
+├── working/<paper>          # the live copy you edit in place
+├── <pdf_id>/, original.pdf  # Mathpix output + source PDF (PDF sources only)
+├── revision-log.md          # every sentence: id, status, original, chosen, fixes
+├── style-profile.md         # evolving model of the author's voice + preferences
+└── artifact/
+    ├── sentences.json       # segment.py output (edit by hand if a split is wrong)
+    ├── changes.md, ui-transcript.md               # written by `export`
+    └── ui-state.json, ui-server.json, ui-server.log   # UI runtime (do not edit)
 ```
 
-Copy the source into both `original/` and `working/`. From here on, every Edit targets `working/` only. The `original/` copy is the safety net and the basis for the final diff.
+5. **Seed the two tracking files** from [references/templates.md](references/templates.md).
 
-4. **Seed the two tracking files** from the templates in [references/templates.md](references/templates.md). Tell the author the workspace is ready and where it is.
+6. **Start the UI**: `python $W start --workspace <paper-stem>-revision` opens the browser and prints `url`. Tell the author the revision happens there. If it fails (see `artifact/ui-server.log`), fall back to `AskUserQuestion` for every decision below, putting each rewrite in an option `label` and the edit level plus fixes in its `description`.
 
 ## Phase 1 — Read the whole paper and profile the voice
 
@@ -83,54 +98,75 @@ While reading, fill in `style-profile.md` from the **existing prose** (this is y
 - Recurring vocabulary and any signature constructions worth preserving.
 - Quirks: does the author already use em-dashes, semicolons, parentheticals? If so they are fair game; if not, don't introduce them.
 
-This profile is what keeps your rewrites sounding like the author instead of like a generic editor. Update it continuously in Phase 2.
+This profile is what keeps your rewrites sounding like the author instead of like a generic editor. Post it so the author can see what you think their voice is: `python $W profile --file style-profile.md`. Re-post it whenever you update it in Phase 2.
 
-The same whole-paper read is your one chance to see the structure before you start editing inside it, so map it now. As you go, record in `revision-log.md` under a **Structure notes** heading: each paragraph's topic sentence (or a note that it lacks one), any transition between paragraphs that drops the reader, and a running **first-use map** of key terms, symbols, and acronyms — where each is introduced and whether it's used anywhere earlier. This map is what lets you catch use-before-define defects in Phase 2, which you could never see one sentence at a time.
+The same whole-paper read is your one chance to see the structure before you start editing inside it, so map it now. Record in `revision-log.md` under **Structure notes**: each paragraph's topic sentence (or a note that it lacks one), any transition between paragraphs that drops the reader, and a running **first-use map** of key terms, symbols, and acronyms — where each is introduced and whether it's used anywhere earlier. This map is what lets you catch use-before-define defects in Phase 2, which you could never see one sentence at a time.
 
-Then segment the prose into reviewable sentences with stable IDs (`S001`, `S002`, …). Segmentation in LaTeX and Markdown has real pitfalls (abbreviations, math, citations, environments) — follow [references/segmentation.md](references/segmentation.md). Record the total count and a sentence-id map in `revision-log.md` so progress is trackable and resumable. Tell the author how many prose sentences there are so they know the scope.
+Then **segment** the prose into reviewable sentences with stable IDs and load them into the UI:
+
+```bash
+python $SEG working/<paper> --out artifact/sentences.json
+python $W load --sentences artifact/sentences.json
+```
+
+`segment.py` follows [references/segmentation.md](references/segmentation.md) (math, citations and abbreviations never split; captions kept; math environments, tables, bibliography and the preamble skipped) and flags references, acknowledgments and appendix sections `skip: true`. Read the JSON: fix any bad split or stray token by editing the file, then `load` again. Its `text` is whitespace-normalised, so when you Edit `working/` match on a distinctive phrase rather than the whole string if the source wraps lines. Copy the id map (id → section, status) into `revision-log.md`, and tell the author (`say`) how many prose sentences there are and where you will start.
 
 ## Phase 2 — Revise sentence by sentence
 
-Loop over unreviewed sentences in order. For each one:
+Loop over unreviewed sentences in order, skipping `skip` sections unless the author asks. For each one:
 
-**1. Show it in context.** Display the previous sentence (dimmed/as context), the current sentence, and the next sentence. Context prevents you from "fixing" a sentence in a way that breaks the flow into the next claim.
+**1. Judge it in context.** Read the previous and next sentence too; context prevents you from "fixing" a sentence in a way that breaks the flow into the next claim. Decide which stop-slop patterns, if any, actually apply, and whether the meaning has fragile parts (a hedge, a precise bound, a defined term) you must preserve. Read it once more as the reader: jargon with a plainer equivalent, an acronym not yet expanded, a term your first-use map says isn't defined until later. When the sentence opens or closes a paragraph, weigh its structural job too.
 
-**2. Judge it.** Decide which stop-slop patterns, if any, actually apply, and whether the meaning has any fragile parts (a hedge, a precise bound, a defined term) you must preserve. Read it once more as the reader, not the author: is there jargon with a plainer equivalent, an acronym not yet expanded, or a term used here that your first-use map says isn't defined until later? Those are reader-stalls worth fixing even when the sentence is otherwise clean. If the sentence is both clean and clear to an outside reader and in the author's voice, say so plainly and offer to keep it — don't manufacture problems to look busy. A fast "this one's clean, keep it?" is a good outcome. When the sentence opens or closes a paragraph, also weigh its structural job: does the opener announce the paragraph's claim, does the closer hand off to the next paragraph? Let that shape the rewrites.
+**2. If it is clean**, say so and confirm quickly — don't manufacture problems to look busy:
 
-**3. Offer three versions as a spectrum.** When a sentence does need work, generate exactly three rewrites at increasing edit distance, each obeying the style-profile and each changing nothing about the meaning:
+```bash
+python $W propose --id S012 --prompt "This one reads clean and in your voice. Keep it?" --light "<original text>" --notes "no change" --timeout 1500
+```
 
-- **Light** — minimal touch-up: fix the one clearest tell, leave structure intact.
-- **Medium** — a genuine rewrite of the sentence for clarity and rhythm.
-- **Bold** — rethink the sentence; may merge with a neighbor or recast the framing.
+(Or `ask --sentence S012 --options "Keep|Show me options anyway"`.) A fast "keep" is a good outcome.
 
-The spectrum is deliberate. The author's pick tells you how aggressive they want you to be, which sharpens the *next* sentence's options. Make the three meaningfully different — three near-identical rewrites waste the choice.
+**3. Otherwise offer three versions as a spectrum**, each obeying the style profile and changing nothing about the meaning — **Light** (fix the one clearest tell, structure intact), **Medium** (a genuine rewrite for clarity and rhythm), **Bold** (rethink; may merge with a neighbour or recast the framing). Make the three meaningfully different; three near-identical rewrites waste the choice. Post them (run with a long Bash timeout such as 1800000 ms):
 
-**4. Let the author choose** with `AskUserQuestion`. Put the actual rewritten sentence in each option's `label` (so they read the real choice) and use the `description` for the edit level plus what it fixes, e.g. "Medium — drops passive voice and the filler opener." Add a fourth option, **"Keep original"**, whenever the original is defensible. The tool always appends an "Other" choice; that is the author's channel for their own wording or a steering instruction.
+```bash
+python $W propose --id S012 --light "..." --medium "..." --bold "..." \
+  --notes "cuts the filler opener|also drops the passive|recasts around the number" --timeout 1500
+```
 
-**5. Interpret the response:**
+Use `--options opts.json` when the sentences carry quotes, backslashes or math (see the protocol). The card shows the original, the three options with your notes, "Keep original", and a free-text box.
 
-- **Picked Light / Medium / Bold / Keep original** → apply that text (Keep original = no edit).
-- **"Other" containing a full sentence** → treat it as their final wording; apply it verbatim. If it's ambiguous whether they meant a final sentence or an instruction, ask once.
-- **"Other" containing an instruction** ("shorter", "keep the citation inline", "less formal", "I like #2 but drop the adverb") → this is steering, not a choice. Generate three new versions guided by it and stay on the same sentence. This loop is where the author teaches you their taste — treat their instruction as a rule for this sentence *and* a signal for future ones.
+**4. Interpret the response** (`status`):
 
-**6. Apply and log.** Edit `working/` to the chosen text (skip if Keep original). Append to `revision-log.md`: the sentence id, original, final text, which version they picked, and the fixes applied. This file is the record of what's been reviewed — keep it current so a resume is exact.
+- `answered`, `answer.choice` = `light` / `medium` / `bold` / `keep` → apply that text (`keep` = no edit). If `answer.text` is also filled it is a steering note on top of the pick ("this one, but drop the adverb") — apply the pick with that adjustment, or re-`propose` if the adjustment is not obvious.
+- `answer.choice` = `other` and `answer.text` is a full sentence → their final wording; apply it verbatim. If it reads as an instruction ("shorter", "keep the citation inline", "less formal") → steering, not a choice: generate three new versions guided by it and `propose` the same sentence again. Ask once (`say`, then `wait`) if it is ambiguous which they meant. This loop is where the author teaches you their taste — treat the instruction as a rule for this sentence *and* a signal for future ones.
+- `message` → they chatted. Answer with `say --sentence S012`, then `wait --id <question_id>`.
+- `pending` → `wait --id <question_id>` again.
 
-**7. Learn.** Update `style-profile.md` with what this choice revealed: their preferred edit aggressiveness, words or constructions they consistently keep or kill, how they handle hedging. Reference [references/preference-learning.md](references/preference-learning.md) for what signals to extract and how to let them shift your future options. The goal is concrete: by sentence 30 you should be proposing options that need far less steering than at sentence 3.
+**5. Apply and log.** Edit `working/` to the chosen text (skip for keep), then mirror it in the UI:
 
-**8. Advance** to the next unreviewed sentence.
+```bash
+python $W apply --id S012 --status edited --text "<final text>" --choice medium --fixes "cut filler opener; active voice"
+python $W apply --id S012 --status kept
+```
 
-**Paragraph checkpoints.** When you finish the last sentence of a paragraph, pause for a short paragraph-level look — the view the sentence loop can't give you. Three questions: does the paragraph lead with a clear topic sentence and support it, or is the claim buried? Does it flow from the previous paragraph and into the next, or is a transition missing or merely mechanical? And does any term land before it's defined, per your first-use map? If something's off, offer a paragraph-level fix the same way you offer sentence edits — propose a concrete change (promote or rewrite the topic sentence, add a real transition, move a definition earlier), let the author choose with `AskUserQuestion`, and log it against the relevant sentence ids. Keep these checkpoints lighter and rarer than the sentence loop; most paragraphs will pass.
+Append the sentence to `revision-log.md` (id, original, final, pick, fixes) — the log plus `artifact/ui-state.json` is what makes a resume exact.
 
-Keep the rhythm humane. Offer the author natural break points ("we've done 20 of 140 — keep going or pause?"). They can stop anytime; the log and profile make resuming seamless.
+**6. Learn.** Update `style-profile.md` with what this choice revealed — preferred aggressiveness, words they keep or kill, how they handle hedging — per [references/preference-learning.md](references/preference-learning.md), and re-post it with `profile` when it changes meaningfully. By sentence 30 you should be proposing options that need far less steering than at sentence 3.
+
+**7. Advance** to the next unreviewed sentence (`status` reports `next_pending`).
+
+**Paragraph checkpoints.** After the last sentence of a paragraph, pause for the view the sentence loop can't give you: does the paragraph lead with a clear topic sentence, does it flow from the previous paragraph and into the next, does any term land before it's defined? If something's off, propose a concrete paragraph-level fix (promote or rewrite the topic sentence, add a real transition, move a definition earlier) with `ask --section NN --prompt "..." --options "Apply|Skip" --text-label "Or tell me what to do instead"`, apply it to `working/` on approval, and log it against the relevant sentence ids (re-run `segment.py` + `load` if the fix changed sentence boundaries; decisions on unchanged sentences survive a reload). Keep checkpoints lighter and rarer than the sentence loop.
+
+**Keep the rhythm humane.** Every 20 sentences or so, offer a break: `ask --prompt "20 of 140 done — keep going or pause here?" --options "Keep going|Pause here"`. They can stop anytime; the log, profile and UI state make resuming seamless.
 
 ## Resuming
 
-When `<paper-stem>-revision/` already exists: read `revision-log.md` to find the last reviewed sentence and read `style-profile.md` to restore everything you learned about the author. Re-read `working/` for current context, then continue from the first unreviewed sentence. Confirm the resume point with the author before diving back in.
+When `<paper-stem>-revision/revision-log.md` exists: `python $W start --workspace <paper-stem>-revision` resumes the UI state (sentences, decisions, chat). Read `revision-log.md` and `style-profile.md` to restore everything you learned about the author, re-read `working/` for current context, check `python $W status` for `next_pending`, then confirm the resume point with the author (`ask --options "Continue from S0NN|Start somewhere else"`) before diving back in.
 
 ## Finishing
 
 When the author stops or you reach the end:
 
-- Summarize what changed: sentences reviewed, edited, and kept.
-- Show a diff between `original/` and `working/` so they see the whole revision at a glance (`diff -u original/<file> working/<file>`, or a section summary if it's large).
-- The edited paper is `working/<file>`; the backup is untouched in `original/`. Leave it to the author to copy `working/` back over their source — don't overwrite their original file yourself.
+- `python $W export` writes `artifact/changes.md` (every edit: original, final, fixes) and `artifact/ui-transcript.md`.
+- Summarise what changed (sentences reviewed, edited, kept) with `say`, and show the diff between `original/` and `working/` — `diff -u original/<file> working/<file>`, posted with `say --file` (or a section summary if it is large).
+- `ask --prompt "Done for now. The edited paper is working/<file>; original/ is untouched." --options "Looks good|I want to revisit a sentence" --text-label "Which sentence?"`; on a revisit, `propose` it again.
+- `python $W stop`. Leave it to the author to copy `working/` back over their source — don't overwrite their original file yourself.

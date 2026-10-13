@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Revision</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1c2330; --muted: #5f6b7a; --line: #e2e6ec;
+  --accent: #2f6fed; --accent-ink: #ffffff; --accent-soft: #e8f0ff;
+  --edited: #2b8a3e; --edited-soft: #e6f7ea; --kept: #5f6b7a; --kept-soft: #eef1f4;
+  --cur: #b7791f; --cur-soft: #fff4dc; --pending: #b6bec9; --danger: #c92a2a; --danger-soft: #fde8e8;
+  --light: #0b7285; --medium: #6741d9; --bold: #c92a2a;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .1);
+  --radius: 10px; --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --panel: #1a2029; --ink: #e6eaf0; --muted: #98a3b3; --line: #2b3441;
+    --accent: #6d9cff; --accent-ink: #0d1523; --accent-soft: #1e2b45;
+    --edited: #51cf66; --edited-soft: #1f3a26; --kept: #98a3b3; --kept-soft: #232a34;
+    --cur: #f4b942; --cur-soft: #3a3020; --pending: #4b5563; --danger: #ff6b6b; --danger-soft: #3a1f22;
+    --light: #63e6be; --medium: #b197fc; --bold: #ff6b6b;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --panel: #1a2029; --ink: #e6eaf0; --muted: #98a3b3; --line: #2b3441;
+  --accent: #6d9cff; --accent-ink: #0d1523; --accent-soft: #1e2b45;
+  --edited: #51cf66; --edited-soft: #1f3a26; --kept: #98a3b3; --kept-soft: #232a34;
+  --cur: #f4b942; --cur-soft: #3a3020; --pending: #4b5563; --danger: #ff6b6b; --danger-soft: #3a1f22;
+  --light: #63e6be; --medium: #b197fc; --bold: #ff6b6b;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+header {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+header h1 { font-size: 16px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.waiting-you { background: var(--cur-soft); color: var(--cur); }
+.pill.waiting-you .dot { animation: pulse 1.2s infinite; }
+.pill.offline { background: var(--danger-soft); color: var(--danger); }
+.pill.working .dot { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+.counts { display: flex; gap: 6px; align-items: center; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; font-weight: 600; background: var(--kept-soft); color: var(--muted); }
+.chip.edited { background: var(--edited-soft); color: var(--edited); }
+.bar { width: 120px; height: 6px; border-radius: 3px; background: var(--kept-soft); overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar .e { background: var(--edited); } .bar .k { background: var(--pending); }
+.app { display: grid; grid-template-columns: 240px minmax(0, 1fr) 420px; gap: 0; height: calc(100vh - 53px); }
+.sidebar, .panel { background: var(--panel); overflow-y: auto; }
+.sidebar { border-right: 1px solid var(--line); padding: 12px 8px; }
+.panel { border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.content { overflow-y: auto; padding: 24px 32px 120px; scroll-behavior: smooth; }
+.sidebar h2, .panel h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 6px 8px 8px; }
+.outline { list-style: none; margin: 0; padding: 0; }
+.outline li { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 14px; }
+.outline li.level-2 { padding-left: 24px; font-size: 13px; }
+.outline li.level-3 { padding-left: 36px; font-size: 12.5px; }
+.outline li:hover { background: var(--bg); }
+.outline li.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.outline li.has { color: var(--ink); }
+.outline li.skip { opacity: .5; }
+.outline .st { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--pending); }
+.outline .st.open { background: var(--cur); box-shadow: 0 0 0 3px var(--cur-soft); }
+.outline .st.done { background: var(--edited); }
+.outline .st.partial { background: linear-gradient(90deg, var(--edited) 50%, var(--pending) 50%); }
+.outline .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.outline .n { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); text-align: center; padding: 60px 20px; }
+.empty .big { font-size: 32px; margin-bottom: 8px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.sec-head h2 { font-size: 24px; margin: 0; }
+.sec-head .status { font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin: 0 0 18px; align-items: center; }
+.legend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 4px; }
+.doc { max-width: 78ch; font-size: 17px; line-height: 1.75; font-family: var(--serif); }
+.doc p { margin: 0 0 1.1em; }
+.doc p.caption { font-size: .92em; color: var(--muted); border-left: 3px solid var(--line); padding-left: 12px; }
+.doc p.caption::before { content: "Caption"; display: block; font: 600 11px/1.4 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.doc .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+.sent { border-radius: 4px; padding: 1px 2px; cursor: pointer; transition: background .15s; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.sent:hover { background: var(--bg); }
+.sent.st-edited { background: var(--edited-soft); border-bottom: 2px solid var(--edited); }
+.sent.st-kept { border-bottom: 2px solid var(--line); }
+.sent.cur { background: var(--cur-soft); border-bottom: 2px solid var(--cur); box-shadow: 0 0 0 3px var(--cur-soft); }
+.sent.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sent .sid { font: 600 10px/1 var(--mono); color: var(--muted); vertical-align: super; margin-right: 3px; opacity: .55; }
+.ref { font-size: .8em; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; white-space: nowrap; font-family: var(--font); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
+.tabs button { flex: 1; background: none; border: 0; padding: 10px; color: var(--muted); font-weight: 600; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; }
+.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab { display: none; flex: 1; min-height: 0; flex-direction: column; }
+.tab.active { display: flex; }
+.inspect { margin: 12px 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-size: 13px; flex: none; }
+.inspect .top { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.inspect .top b { font-family: var(--mono); color: var(--ink); }
+.inspect .orig { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+.inspect .fin { margin-top: 2px; }
+.inspect .fix { margin-top: 4px; font-size: 12px; color: var(--edited); }
+.sev { font-weight: 700; padding: 1px 7px; border-radius: 999px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.sev.edited { background: var(--edited-soft); color: var(--edited); }
+.sev.kept { background: var(--kept-soft); color: var(--kept); }
+.sev.pending { background: var(--cur-soft); color: var(--cur); }
+.thread { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 92%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+.msg.assistant { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
+.msg.user { align-self: flex-end; background: var(--accent-soft); border-bottom-right-radius: 4px; }
+.msg .who { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.msg .who b { font-family: var(--mono); font-weight: 600; }
+.msg .body p:last-child { margin-bottom: 0; } .msg .body p { margin: 0 0 .6em; }
+.msg .body pre { background: rgba(0,0,0,.06); padding: 8px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; }
+.msg .decision { font-size: 13px; }
+.msg .decision .kv { display: flex; gap: 6px; } .msg .decision .kv b { color: var(--muted); font-weight: 500; flex: none; }
+.qcard { margin: 0 12px 12px; padding: 14px; border: 1.5px solid var(--accent); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); flex: none; max-height: 70vh; overflow-y: auto; }
+.qcard .lbl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+.qcard .lbl b { font-family: var(--mono); color: var(--muted); font-weight: 600; letter-spacing: 0; text-transform: none; }
+.qcard .prompt { font-size: 14px; margin-bottom: 10px; } .qcard .prompt p { margin: 0 0 .5em; }
+.qcard .orig { font-family: var(--serif); font-size: 14.5px; color: var(--muted); padding: 8px 10px; border-left: 3px solid var(--line); margin-bottom: 10px; }
+.qcard .orig .k { font: 600 10.5px/1.4 var(--font); letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.choice { padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); cursor: pointer; }
+.choice:hover { border-color: var(--muted); }
+.choice.on { border-color: var(--accent); background: var(--accent-soft); }
+.choice .lv { display: flex; gap: 8px; align-items: center; font: 600 11px/1.4 var(--font); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3px; }
+.choice .lv .key { font: 600 10px/1 var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; letter-spacing: 0; text-transform: none; }
+.choice.light .lv { color: var(--light); } .choice.medium .lv { color: var(--medium); } .choice.bold .lv { color: var(--bold); } .choice.keep .lv { color: var(--kept); }
+.choice .tx { font-family: var(--serif); font-size: 15px; line-height: 1.55; }
+.choice .nt { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.opt { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-size: 13.5px; }
+.opt.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+textarea, input[type=text], select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); resize: vertical; }
+textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-weight: 600; font-size: 13.5px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.small { padding: 4px 9px; font-size: 12px; font-weight: 500; }
+.btn:disabled { opacity: .5; cursor: default; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row.end { justify-content: flex-end; }
+.hint { font-size: 12px; color: var(--muted); }
+.composer { border-top: 1px solid var(--line); padding: 10px 12px; flex: none; }
+.composer textarea { min-height: 58px; margin-bottom: 6px; }
+.banner { margin: 0 12px 12px; padding: 10px 12px; border-radius: 8px; background: var(--cur-soft); color: var(--cur); font-size: 13px; flex: none; }
+.banner a { color: inherit; font-weight: 600; cursor: pointer; }
+.list-wrap { flex: 1; overflow-y: auto; padding: 12px; }
+.filter { display: flex; gap: 6px; margin-bottom: 10px; }
+.change { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; background: var(--panel); font-size: 13.5px; cursor: pointer; }
+.change:hover { border-color: var(--muted); }
+.change .top { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; font-size: 12px; color: var(--muted); }
+.change .top b { font-family: var(--mono); color: var(--ink); }
+.change .top .sp { flex: 1; }
+.change .orig { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--danger) 50%, transparent); font-family: var(--serif); }
+.change .fin { font-family: var(--serif); margin-top: 2px; }
+.change .fix { margin-top: 4px; font-size: 12px; color: var(--edited); }
+.prose { font-size: 14px; }
+.prose h1, .prose h2, .prose h3 { font-size: 1.05em; margin: 1.2em 0 .4em; } .prose h1:first-child, .prose h2:first-child { margin-top: 0; }
+.prose ul { padding-left: 18px; } .prose li { margin-bottom: 2px; } .prose p { margin: 0 0 .7em; }
+.prose code { font-family: var(--mono); font-size: .9em; }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 999px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 60; }
+.toast.on { opacity: 1; }
+.sec-select { display: none; width: 100%; margin-bottom: 12px; }
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 48vh); }
+  .panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+  .content { padding: 20px; }
+}
+@media (max-width: 720px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+  .sec-select { display: block; }
+  .content { padding: 16px; }
+  header .counts { display: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Paper Revision</h1>
+  <div class="counts" id="counts"></div>
+  <span class="pill working" id="status"><span class="dot"></span><span id="status-text">Connecting…</span></span>
+</header>
+<div class="app">
+  <aside class="sidebar">
+    <h2>Sections</h2>
+    <ul class="outline" id="outline"></ul>
+  </aside>
+  <main class="content" id="content"></main>
+  <aside class="panel">
+    <div class="tabs">
+      <button id="tab-chat" class="active" onclick="showTab('chat')">Conversation</button>
+      <button id="tab-changes" onclick="showTab('changes')">Changes <span id="change-n"></span></button>
+      <button id="tab-style" onclick="showTab('style')">Style</button>
+    </div>
+    <div class="tab active" id="pane-chat">
+      <div id="inspect"></div>
+      <div class="thread" id="thread"></div>
+      <div id="banner"></div>
+      <div id="qcard"></div>
+      <div class="composer">
+        <textarea id="composer" placeholder="Ask Claude, or steer it (“keep 'we', drop the adverbs”)… (⌘/Ctrl+Enter to send)"></textarea>
+        <div class="row end">
+          <span class="hint" id="composer-hint">Messages go to Claude; it replies here.</span>
+          <button class="btn primary" id="send" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+    <div class="tab" id="pane-changes">
+      <div class="list-wrap">
+        <div class="filter">
+          <button class="btn small" id="f-this" onclick="setFilter('this')">This section</button>
+          <button class="btn small" id="f-all" onclick="setFilter('all')">All</button>
+        </div>
+        <div id="changes"></div>
+      </div>
+    </div>
+    <div class="tab" id="pane-style">
+      <div class="list-wrap prose" id="profile"></div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+let state = null, version = 0, selected = null, picked = null, filter = 'this', offline = false;
+let renderedQuestion = null, lastSeenQuestion = null, lastDocKey = null, lastThreadKey = null, lastCurrent = null, lastProfile = null;
+const LEVEL_LABEL = { light: 'Light', medium: 'Medium', bold: 'Bold', keep: 'Keep original' };
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); }
+async function post(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+// ---------- markdown + math
+function protectMath(md) {
+  const slots = [];
+  const keep = (m) => { slots.push(m); return `@@MATH${slots.length - 1}@@`; };
+  md = md.replace(/\$\$[\s\S]+?\$\$/g, keep)
+         .replace(/\\\[[\s\S]+?\\\]/g, keep)
+         .replace(/\\\([\s\S]+?\\\)/g, keep)
+         .replace(/(^|[^\\$])\$(?!\s)((?:\\.|[^$\n])+?)\$(?![\d$])/g, (m, pre, body) => pre + keep('$' + body + '$'));
+  return { md, slots };
+}
+function restoreMath(html, slots) { return html.replace(/@@MATH(\d+)@@/g, (m, i) => esc(slots[+i])); }
+function refs(html) {
+  return html.replace(/\[(cite|ref|eqref|autoref|cref):\s*([^\]]*)\]/g, (m, k, v) => `<span class="ref" title="${k}">${k === 'cite' ? '📖' : '↗'} ${esc(v)}</span>`);
+}
+function mathify(el) {
+  if (!window.renderMathInElement) return;
+  try { renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }, { left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {}
+}
+function renderInline(md) {
+  const { md: safe, slots } = protectMath(md || '');
+  let html;
+  try { html = window.marked ? marked.parseInline(safe, { mangle: false }) : esc(safe); } catch (e) { html = esc(safe); }
+  return restoreMath(refs(html), slots);
+}
+function renderBlock(md) {
+  const { md: safe, slots } = protectMath(md || '');
+  let html;
+  try { html = window.marked ? marked.parse(safe, { mangle: false, headerIds: false }) : `<pre>${esc(safe)}</pre>`; } catch (e) { html = `<pre>${esc(safe)}</pre>`; }
+  const div = document.createElement('div');
+  div.innerHTML = restoreMath(refs(html), slots);
+  mathify(div);
+  return div;
+}
+
+// ---------- state polling
+async function poll() {
+  try {
+    const r = await fetch(`/api/state?v=${version}&timeout=25`);
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json();
+    offline = false;
+    if (s.version !== version) { version = s.version; state = s; render(); } else { renderStatus(); }
+  } catch (e) {
+    offline = true; renderStatus();
+    await new Promise(res => setTimeout(res, 2000));
+  }
+  poll();
+}
+
+// ---------- helpers
+function sentence(id) { return state ? state.sentences.find(s => s.id === id) : null; }
+function sectionTitle(id) { const o = state && state.outline.find(o => o.id === id); return o ? o.title : (id || 'General'); }
+function sectionIds() {
+  const ids = state.outline.map(o => o.id);
+  state.sentences.forEach(s => { if (!ids.includes(s.section)) ids.push(s.section); });
+  return ids;
+}
+function pendingQuestion() { return state ? [...state.questions].reverse().find(q => q.status === 'pending') : null; }
+function counts(list) {
+  const c = { total: list.length, edited: 0, kept: 0, pending: 0 };
+  list.forEach(s => { c[s.status] = (c[s.status] || 0) + 1; });
+  c.reviewed = c.edited + c.kept; return c;
+}
+
+function render() {
+  if (!state) return;
+  const cur = sentence(state.current);
+  const q = pendingQuestion();
+  if (q && q.id !== lastSeenQuestion) {
+    lastSeenQuestion = q.id;
+    const target = q.sentence ? sentence(q.sentence) : null;
+    if (target) selected = target.section; else if (q.section) selected = q.section;
+    picked = null; showTab('chat'); notify(q);
+  } else if (cur && state.current !== lastCurrent && cur.section !== selected) {
+    selected = cur.section;
+  }
+  lastCurrent = state.current;
+  const ids = sectionIds();
+  if (!selected || !ids.includes(selected)) selected = (cur && cur.section) || ids[0] || null;
+  document.title = (q ? '● ' : '') + (state.title || 'Paper Revision');
+  $('title').textContent = state.title || 'Paper Revision';
+  renderStatus(); renderCounts(); renderOutline(); renderDoc(); renderInspect(); renderThread(); renderQuestion(); renderChanges(); renderProfile();
+}
+
+function renderStatus() {
+  const el = $('status'), txt = $('status-text');
+  el.className = 'pill';
+  if (offline) { el.classList.add('offline'); txt.textContent = 'Server offline'; return; }
+  if (!state) { el.classList.add('working'); txt.textContent = 'Connecting…'; return; }
+  const q = pendingQuestion();
+  if (q) { el.classList.add('waiting-you'); txt.textContent = 'Claude is waiting for your choice'; }
+  else if (state.waiting) { el.classList.add('working'); txt.textContent = 'Claude is listening'; }
+  else { el.classList.add('working'); txt.textContent = 'Claude is working…'; }
+}
+function renderCounts() {
+  const c = counts(state.sentences);
+  const pe = c.total ? (100 * c.edited / c.total) : 0, pk = c.total ? (100 * c.kept / c.total) : 0;
+  $('counts').innerHTML = `<span class="chip">${c.reviewed} / ${c.total} reviewed</span><span class="chip edited">${c.edited} edited</span><span class="bar" title="${c.edited} edited · ${c.kept} kept · ${c.pending} pending"><i class="e" style="width:${pe}%"></i><i class="k" style="width:${pk}%"></i></span>`;
+  $('change-n').textContent = c.edited ? `(${c.edited})` : '';
+}
+function renderOutline() {
+  const ul = $('outline'); ul.innerHTML = '';
+  const cur = sentence(state.current);
+  const items = [...state.outline];
+  sectionIds().forEach(id => { if (!items.find(o => o.id === id)) items.push({ id, title: id, level: 1 }); });
+  items.forEach(o => {
+    const list = state.sentences.filter(s => s.section === o.id);
+    const c = counts(list);
+    const st = cur && cur.section === o.id ? 'open' : (c.total && c.reviewed === c.total) ? 'done' : c.reviewed ? 'partial' : 'pending';
+    const li = document.createElement('li');
+    li.className = `level-${o.level || 1} ${c.total ? 'has' : ''} ${o.id === selected ? 'selected' : ''} ${o.skip ? 'skip' : ''}`;
+    li.innerHTML = `<span class="st ${st}"></span><span class="t">${esc(o.title)}</span>${c.total ? `<span class="n">${c.reviewed}/${c.total}</span>` : ''}`;
+    li.title = `${o.title} — ${c.reviewed} of ${c.total} reviewed${o.skip ? ' (skipped by default)' : ''}`;
+    li.onclick = () => { selected = o.id; render(); };
+    ul.appendChild(li);
+  });
+  if (!items.length) ul.innerHTML = '<li class="hint" style="cursor:default">No outline yet</li>';
+}
+function renderDoc() {
+  const c = $('content');
+  const list = state.sentences.filter(s => s.section === selected);
+  const key = selected + ':' + list.map(s => `${s.id}${s.status[0]}${(s.ts || '')}${s.id === state.current ? '*' : ''}${s.id === picked ? '!' : ''}`).join('');
+  if (key === lastDocKey) return;
+  const prevKey = lastDocKey; lastDocKey = key;
+  c.innerHTML = '';
+  const sel = document.createElement('select'); sel.className = 'sec-select';
+  const items = [...state.outline]; sectionIds().forEach(id => { if (!items.find(o => o.id === id)) items.push({ id, title: id }); });
+  items.forEach(o => { const op = document.createElement('option'); op.value = o.id; op.textContent = o.title; op.selected = o.id === selected; sel.appendChild(op); });
+  sel.onchange = () => { selected = sel.value; render(); };
+  c.appendChild(sel);
+  if (!list.length) {
+    c.insertAdjacentHTML('beforeend', `<div class="empty"><div class="big">✍️</div>${state.sentences.length ? `<b>${esc(sectionTitle(selected))}</b><br>No prose sentences in this section.` : 'Waiting for Claude to load the paper…'}</div>`);
+    return;
+  }
+  const cs = counts(list);
+  const head = document.createElement('div'); head.className = 'sec-head';
+  head.innerHTML = `<h2>${esc(sectionTitle(selected))}</h2><span class="status">${cs.reviewed} of ${cs.total} reviewed · ${cs.edited} edited</span>`;
+  c.appendChild(head);
+  const legend = document.createElement('div'); legend.className = 'legend';
+  legend.innerHTML = `<span><span class="sw" style="background:var(--cur-soft);border-bottom:2px solid var(--cur)"></span>being discussed</span><span><span class="sw" style="background:var(--edited-soft);border-bottom:2px solid var(--edited)"></span>edited</span><span><span class="sw" style="border-bottom:2px solid var(--line)"></span>kept</span><span><span class="sw"></span>not yet reviewed</span><span>· click a sentence to see its history</span>`;
+  c.appendChild(legend);
+  const doc = document.createElement('div'); doc.className = 'doc';
+  let para = null, p = null;
+  list.forEach(s => {
+    if (s.para !== para || !p) { para = s.para; p = document.createElement('p'); if (s.kind === 'caption') p.className = 'caption'; doc.appendChild(p); }
+    const span = document.createElement('span');
+    span.className = `sent st-${s.status} ${s.id === state.current ? 'cur' : ''} ${s.id === picked ? 'sel' : ''}`;
+    span.id = `sent-${s.id}`;
+    span.title = `${s.id} · ${s.status}${s.choice ? ' (' + s.choice + ')' : ''}`;
+    span.innerHTML = `<span class="sid">${esc(s.id.replace(/^S0*/, ''))}</span>${renderInline(s.display || s.current)}`;
+    span.onclick = () => { picked = picked === s.id ? null : s.id; render(); };
+    p.appendChild(span); p.appendChild(document.createTextNode(' '));
+  });
+  mathify(doc);
+  c.appendChild(doc);
+  const focus = state.current && list.find(s => s.id === state.current);
+  if (focus && (!prevKey || prevKey.indexOf(`${state.current}*`) < 0 || !prevKey.startsWith(selected + ':'))) {
+    const el = $(`sent-${state.current}`); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 50);
+  }
+}
+function renderInspect() {
+  const box = $('inspect');
+  const s = sentence(picked) || sentence(state.current);
+  if (!s) { box.innerHTML = ''; return; }
+  const edited = s.status === 'edited';
+  box.innerHTML = `<div class="inspect"><div class="top"><b>${esc(s.id)}</b><span class="sev ${s.status}">${s.status}</span><span>${esc(sectionTitle(s.section))}${s.choice ? ' · ' + esc(LEVEL_LABEL[s.choice] || s.choice) : ''}</span>${picked ? '<span style="flex:1"></span><a class="hint" style="cursor:pointer" onclick="picked=null;render()">close</a>' : ''}</div>${edited ? `<div class="orig">${renderInline(s.display_original)}</div>` : ''}<div class="fin">${renderInline(s.display || s.current)}</div>${s.fixes ? `<div class="fix">✓ ${esc(s.fixes)}</div>` : ''}</div>`;
+  mathify(box);
+}
+function renderThread() {
+  const th = $('thread');
+  const msgs = state.messages.filter(m => m.section === selected || (!m.section && !selected));
+  const key = selected + ':' + msgs.map(m => m.id).join(',');
+  if (key === lastThreadKey) return;
+  lastThreadKey = key;
+  th.innerHTML = '';
+  if (!msgs.length) th.innerHTML = `<div class="hint" style="text-align:center;padding:20px">No conversation on this section yet.</div>`;
+  msgs.forEach(m => {
+    const d = document.createElement('div'); d.className = `msg ${m.role}`;
+    const tag = m.sentence ? `<b>${esc(m.sentence)}</b> · ` : '';
+    if (m.kind === 'answer' && m.answer) {
+      const a = m.answer; const parts = [];
+      if (a.choice) parts.push(`<div class="kv"><b>Chose:</b><span>${esc(LEVEL_LABEL[a.choice] || a.choice)}${a.choices && a.choices.length > 1 ? ' (' + esc(a.choices.join(', ')) + ')' : ''}</span></div>`);
+      else if (a.choices && a.choices.length) parts.push(`<div class="kv"><b>Chose:</b><span>${esc(a.choices.join(', '))}</span></div>`);
+      if (a.values) Object.entries(a.values).forEach(([k, v]) => { if (v !== '' && v != null) parts.push(`<div class="kv"><b>${esc(k)}:</b><span>${esc(Array.isArray(v) ? v.join(', ') : v)}</span></div>`); });
+      if (a.text) parts.push(`<div style="margin-top:4px;white-space:pre-wrap">${esc(a.text)}</div>`);
+      d.innerHTML = `<div class="who">${tag}You decided · ${esc(m.ts.slice(11, 16))}</div><div class="decision">${parts.join('') || '<i>submitted</i>'}</div>`;
+    } else {
+      d.innerHTML = `<div class="who">${tag}${m.role === 'user' ? 'You' : 'Claude'} · ${esc(m.ts.slice(11, 16))}</div>`;
+      const b = renderBlock(m.text); b.className = 'body'; d.appendChild(b);
+    }
+    th.appendChild(d);
+  });
+  th.scrollTop = th.scrollHeight;
+}
+function renderQuestion() {
+  const q = pendingQuestion();
+  const banner = $('banner'), card = $('qcard');
+  banner.innerHTML = '';
+  if (!q) { card.innerHTML = ''; renderedQuestion = null; return; }
+  const qs = q.sentence ? sentence(q.sentence) : null;
+  const qsec = qs ? qs.section : q.section;
+  if (qsec && qsec !== selected) {
+    banner.innerHTML = `<div class="banner">Claude is waiting on <a onclick="selected='${esc(qsec)}';render()">${esc(sectionTitle(qsec))}${qs ? ' · ' + esc(qs.id) : ''}</a>.</div>`;
+    card.innerHTML = ''; renderedQuestion = null; return;
+  }
+  if (renderedQuestion === q.id) return;
+  renderedQuestion = q.id;
+  card.innerHTML = '';
+  const el = document.createElement('div'); el.className = 'qcard';
+  if (q.kind === 'propose') buildProposeCard(el, q, qs); else buildAskCard(el, q);
+  card.appendChild(el);
+  mathify(el);
+}
+function buildProposeCard(el, q, s) {
+  el.innerHTML = `<div class="lbl">Your call <b>${esc(q.sentence || '')}</b></div>`;
+  if (q.prompt) { const p = renderBlock(q.prompt); p.className = 'prompt'; el.appendChild(p); }
+  if (s) el.insertAdjacentHTML('beforeend', `<div class="orig"><span class="k">Original</span>${renderInline(s.display_original || s.original)}</div>`);
+  const list = document.createElement('div'); list.className = 'choices';
+  const entries = (q.options || []).map(o => ({ key: o.level, label: LEVEL_LABEL[o.level] || o.level, text: o.text, display: o.display || o.text, note: o.note }));
+  if (q.keep !== false) entries.push({ key: 'keep', label: 'Keep original', text: s ? s.original : '', display: null, note: 'Leave the sentence as it is.' });
+  let chosen = null;
+  const boxes = entries.map((e, i) => {
+    const b = document.createElement('div'); b.className = `choice ${e.key}`;
+    b.innerHTML = `<div class="lv"><span class="key">${i + 1}</span>${esc(e.label)}</div>${e.display != null ? `<div class="tx">${renderInline(e.display)}</div>` : ''}${e.note ? `<div class="nt">${esc(e.note)}</div>` : ''}`;
+    b.onclick = () => { chosen = chosen === e.key ? null : e.key; boxes.forEach((x, j) => x.classList.toggle('on', entries[j].key === chosen)); };
+    list.appendChild(b); return b;
+  });
+  el.appendChild(list);
+  const w = document.createElement('div'); w.className = 'field';
+  w.innerHTML = `<label>${esc(q.text_label || 'Your own wording, or how to change these options')}</label>`;
+  const textEl = document.createElement('textarea'); textEl.placeholder = 'Optional — a full sentence is applied as written; anything else steers Claude'; w.appendChild(textEl); el.appendChild(w);
+  const row = document.createElement('div'); row.className = 'row end';
+  row.innerHTML = `<span class="hint">Press 1–${entries.length} to pick · ⌘/Ctrl+Enter to submit</span>`;
+  const submit = document.createElement('button'); submit.className = 'btn primary'; submit.textContent = 'Submit';
+  submit.onclick = async () => {
+    const text = textEl.value.trim();
+    if (!chosen && !text) { toast('Pick a version or write something'); return; }
+    const entry = entries.find(e => e.key === chosen);
+    const answer = { choice: chosen || 'other', chosen_text: entry ? entry.text : '', text, values: {} };
+    submit.disabled = true;
+    const summary = [chosen ? (chosen === 'keep' ? 'Keep original' : `Picked ${LEVEL_LABEL[chosen] || chosen}`) : 'Own wording / steer', text].filter(Boolean).join('\n');
+    const r = await post('/api/user', { op: 'answer', question_id: q.id, answer, summary });
+    if (!r.ok) { toast(r.error || 'Could not submit'); submit.disabled = false; }
+  };
+  row.appendChild(submit); el.appendChild(row);
+  el._pick = (n) => { const e = entries[n - 1]; if (e) { chosen = e.key; boxes.forEach((x, j) => x.classList.toggle('on', entries[j].key === chosen)); } };
+  el._textEl = textEl;
+}
+function buildAskCard(el, q) {
+  el.innerHTML = `<div class="lbl">Decision needed${q.sentence ? ` <b>${esc(q.sentence)}</b>` : ''}</div>`;
+  const p = renderBlock(q.prompt); p.className = 'prompt'; el.appendChild(p);
+  const chosen = new Set();
+  if (q.options && q.options.length) {
+    const opts = document.createElement('div'); opts.className = 'opts';
+    q.options.forEach(o => {
+      const b = document.createElement('button'); b.className = 'opt'; b.textContent = o;
+      b.onclick = () => { if (q.multi) { chosen.has(o) ? chosen.delete(o) : chosen.add(o); } else { chosen.clear(); chosen.add(o); } opts.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', chosen.has(x.textContent))); };
+      opts.appendChild(b);
+    });
+    el.appendChild(opts);
+  }
+  const fieldEls = {};
+  (q.fields || []).forEach(f => {
+    const w = document.createElement('div'); w.className = 'field';
+    const id = `f-${q.id}-${f.id}`;
+    let input;
+    if (f.type === 'select') {
+      input = document.createElement('select');
+      (f.options || []).forEach(o => { const op = document.createElement('option'); op.value = o; op.textContent = o; input.appendChild(op); });
+      if (f.multi) input.multiple = true;
+    } else if (f.type === 'checkbox') {
+      input = document.createElement('input'); input.type = 'checkbox'; input.style.width = 'auto';
+    } else if (f.type === 'text') {
+      input = document.createElement('input'); input.type = 'text';
+    } else {
+      input = document.createElement('textarea');
+    }
+    input.id = id; if (f.placeholder) input.placeholder = f.placeholder;
+    w.innerHTML = `<label for="${id}">${esc(f.label || f.id)}${f.required ? ' *' : ''}</label>`;
+    w.appendChild(input); el.appendChild(w); fieldEls[f.id] = { input, f };
+  });
+  let textEl = null;
+  if (q.text_label) {
+    const w = document.createElement('div'); w.className = 'field';
+    w.innerHTML = `<label>${esc(q.text_label)}</label>`;
+    textEl = document.createElement('textarea'); textEl.placeholder = 'Optional'; w.appendChild(textEl); el.appendChild(w);
+  }
+  const row = document.createElement('div'); row.className = 'row end';
+  row.innerHTML = `<span class="hint">${q.options && q.options.length ? (q.multi ? 'Pick any that apply' : 'Pick one') : ''}</span>`;
+  const submit = document.createElement('button'); submit.className = 'btn primary'; submit.textContent = 'Submit';
+  submit.onclick = async () => {
+    const answer = { choice: q.multi ? null : [...chosen][0] || null, choices: [...chosen], text: textEl ? textEl.value.trim() : '', values: {} };
+    for (const [id, { input, f }] of Object.entries(fieldEls)) {
+      let v;
+      if (f.type === 'checkbox') v = input.checked;
+      else if (f.type === 'select' && input.multiple) v = [...input.selectedOptions].map(o => o.value);
+      else v = input.value.trim();
+      if (f.required && (v === '' || (Array.isArray(v) && !v.length))) { toast(`"${f.label || id}" is required`); input.focus(); return; }
+      answer.values[id] = v;
+    }
+    if (q.options && q.options.length && !chosen.size && !(textEl && answer.text) && !Object.keys(fieldEls).length) { toast('Pick an option or write something'); return; }
+    submit.disabled = true;
+    const summary = [answer.choice || answer.choices.join(', '), ...Object.entries(answer.values).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`), answer.text].filter(Boolean).join('\n');
+    const r = await post('/api/user', { op: 'answer', question_id: q.id, answer, summary });
+    if (!r.ok) { toast(r.error || 'Could not submit'); submit.disabled = false; }
+  };
+  row.appendChild(submit); el.appendChild(row);
+  el._textEl = textEl;
+}
+function renderChanges() {
+  $('f-this').classList.toggle('primary', filter === 'this'); $('f-all').classList.toggle('primary', filter === 'all');
+  const list = $('changes'); list.innerHTML = '';
+  const items = state.sentences.filter(s => s.status === 'edited' && (filter === 'all' || s.section === selected));
+  if (!items.length) { list.innerHTML = `<div class="hint" style="text-align:center;padding:16px">No edits ${filter === 'this' ? 'in this section' : ''} yet.</div>`; return; }
+  [...items].sort((a, b) => (b.ts || '').localeCompare(a.ts || '')).forEach(s => {
+    const d = document.createElement('div'); d.className = 'change';
+    d.innerHTML = `<div class="top"><b>${esc(s.id)}</b><span>${esc(sectionTitle(s.section))}</span><span class="sp"></span><span>${esc(LEVEL_LABEL[s.choice] || s.choice || '')}</span></div><div class="orig">${renderInline(s.display_original)}</div><div class="fin">${renderInline(s.display || s.current)}</div>${s.fixes ? `<div class="fix">✓ ${esc(s.fixes)}</div>` : ''}`;
+    d.onclick = () => { selected = s.section; picked = s.id; showTab('chat'); render(); const el = $(`sent-${s.id}`); if (el) el.scrollIntoView({ block: 'center' }); };
+    list.appendChild(d);
+  });
+  mathify(list);
+}
+function renderProfile() {
+  if (state.profile === lastProfile) return;
+  lastProfile = state.profile;
+  const box = $('profile'); box.innerHTML = '';
+  if (!state.profile) { box.innerHTML = '<div class="hint" style="text-align:center;padding:16px">Claude has not shared a style profile yet. It appears here once Claude has read the paper, and updates as you make choices.</div>'; return; }
+  box.appendChild(renderBlock(state.profile));
+}
+
+// ---------- actions
+function showTab(name) {
+  ['chat', 'changes', 'style'].forEach(t => { $(`tab-${t}`).classList.toggle('active', t === name); $(`pane-${t}`).classList.toggle('active', t === name); });
+}
+function setFilter(f) { filter = f; renderChanges(); }
+async function sendMessage() {
+  const ta = $('composer'); const text = ta.value.trim();
+  if (!text) return;
+  $('send').disabled = true;
+  const cur = sentence(state && state.current);
+  const r = await post('/api/user', { op: 'message', section: selected, sentence: cur && cur.section === selected ? cur.id : (picked || null), text });
+  $('send').disabled = false;
+  if (r.ok) { ta.value = ''; } else toast(r.error || 'Could not send');
+}
+function notify(q) {
+  if (document.visibilityState === 'visible') return;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('Claude is waiting for your choice', { body: (q.sentence ? q.sentence + ' · ' : '') + (q.prompt || 'Pick a version').slice(0, 120) }); } catch (e) {}
+  }
+}
+document.addEventListener('keydown', (e) => {
+  const card = document.querySelector('.qcard');
+  const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    if (document.activeElement === $('composer')) sendMessage();
+    else if (card) { const b = card.querySelector('.btn.primary'); if (b) b.click(); }
+    return;
+  }
+  if (card && card._pick && !typing && /^[1-9]$/.test(e.key)) { card._pick(+e.key); e.preventDefault(); }
+});
+document.addEventListener('click', () => { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }, { once: true });
+poll();
+</script>
+</body>
+</html>

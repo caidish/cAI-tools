@@ -8,6 +8,7 @@ Seed these two files in Phase 0. Keep them plain Markdown so the author can read
 # Revision log — <paper title or filename>
 
 - Source: <path to original>
+- Conversion: <none | Mathpix PDF→LaTeX, pdf_id <id>>
 - Started: <date>
 - Total prose sentences: <N>   (fill in after segmentation)
 - Last reviewed: <sentence id, or "none yet">
@@ -20,7 +21,7 @@ Seed these two files in Phase 0. Keep them plain Markdown so the author can read
 | S002 | Abstract | edited  |
 | S003 | Abstract | pending |
 
-Status values: pending · kept (original unchanged) · edited (rewritten).
+Status values: pending · kept (original unchanged) · edited (rewritten). The same statuses live in `artifact/ui-state.json` (kept by `writer_ui.py apply`); the log is the human-readable copy.
 
 ## Structure notes
 
